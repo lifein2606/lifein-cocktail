@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 // ====== 配置区域 ======
 const ARK_API_KEY = process.env.ARK_API_KEY || '';
-const ARK_MODEL = process.env.ARK_MODEL || 'doubao-seedream-4-0-250828';
+const ARK_MODEL = process.env.ARK_MODEL || 'doubao-seedream-5-0-260128';
 // =======================
 
 app.use(express.json({ limit: '20mb' }));
@@ -17,7 +17,8 @@ app.use(express.static(__dirname));
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
-        ark_configured: !!ARK_API_KEY
+        ark_configured: !!ARK_API_KEY,
+        model: ARK_MODEL
     });
 });
 
@@ -42,7 +43,8 @@ app.post('/api/generate-mockup', async (req, res) => {
 
     try {
         const prompt = buildMockupPrompt(cocktail_name, cocktail_name_en, volume, alcohol);
-        console.log(`🎨 生成瓶身样机: ${cocktail_name}`);
+        console.log(`🎨 生成瓶身样机: ${cocktail_name}, 模型: ${ARK_MODEL}`);
+        console.log(`📐 图片数据长度: ${image.length} 字符`);
         const imageUrl = await callArkImageAPI(prompt, image);
         console.log(`✅ 生成成功`);
         res.json({ image_url: imageUrl });
@@ -52,12 +54,12 @@ app.post('/api/generate-mockup', async (req, res) => {
     }
 });
 
-// 7轮迭代经验沉淀的 Prompt
+// 图生图 Prompt：明确告诉模型基于参考图生成
 function buildMockupPrompt(name, nameEn, volume, alcohol) {
     const vol = volume || '275ml';
     const alc = alcohol || '16% vol';
 
-    return `Life In.品牌鸡尾酒瓶身定制效果图。一个透明玻璃瓶配原木色软木塞，瓶身中央贴着一张长方形标签。标签的完整背景就是用户上传的这张照片，照片内容完整保留不裁剪不抠图，作为标签的全幅背景。标签顶部边缘有一条窄的半透明深色底条，上面用白色优雅字体写着品牌名"Life In."。标签底部边缘有一条窄的半透明深色底条，上面用白色字体写着产品名"${name}"，下方小字写着"${vol} | ${alc}"。文字只叠加在标签的上下边缘区域，完全不遮挡照片中间的人物或动物等主体内容。瓶子形状为标准圆肩直身透明玻璃瓶，与参考照片中的瓶子形状完全一致不变形。瓶子放在一个有大理石质感的台面上，台面上有少量与鸡尾酒风味相关的水果和植物装饰，背景是柔和的浅色渐变。产品摄影级画质，自然光影，精致质感，高清8K。`;
+    return `基于参考图片生成一张Life In.品牌鸡尾酒瓶身定制效果图。将参考图片的内容完整保留，作为瓶身中央长方形标签的全幅背景。在标签顶部边缘添加一条窄的半透明深色底条，上面用白色优雅字体写品牌名"Life In."。在标签底部边缘添加一条窄的半透明深色底条，上面用白色字体写产品名"${name}"，下方小字写"${vol} | ${alc}"。文字只叠加在标签上下边缘，不遮挡参考图片中间的主体内容。瓶子为透明玻璃瓶配原木色软木塞，标准圆肩直身，放在大理石质感台面上，台面上有少量与鸡尾酒风味相关的水果和植物装饰，背景是柔和的浅色渐变。产品摄影级画质，自然光影，精致质感。`;
 }
 
 // 火山引擎 ARK API 调用
@@ -71,10 +73,12 @@ function callArkImageAPI(prompt, imageBase64) {
         model: ARK_MODEL,
         prompt: prompt,
         image: imageData,
-        size: '1024x1024',
+        size: '2K',
         response_format: 'url',
+        sequential_image_generation: 'disabled',
         stream: false,
-        watermark: false
+        watermark: false,
+        optimize_prompt_options: { mode: 'standard' }
     });
 
     return new Promise((resolve, reject) => {
@@ -132,4 +136,5 @@ function callArkImageAPI(prompt, imageBase64) {
 app.listen(PORT, () => {
     console.log(`🍸 Life In. 鸡尾酒定制系统 → http://localhost:${PORT}`);
     console.log(`🎨 ARK API（图片生成）: ${ARK_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
+    console.log(`📦 模型: ${ARK_MODEL}`);
 });
