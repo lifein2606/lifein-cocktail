@@ -11,7 +11,7 @@ const ARK_MODEL = process.env.ARK_MODEL || 'doubao-seedream-4-0-250828';
 // =======================
 
 app.use(express.json({ limit: '20mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // 健康检查
 app.get('/api/health', (req, res) => {
