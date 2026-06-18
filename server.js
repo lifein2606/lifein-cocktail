@@ -15,6 +15,11 @@ const COZE_BOT_ID = process.env.COZE_BOT_ID || '';
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(__dirname));
 
+// 显式根路由，确保首页可访问
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // 健康检查
 app.get('/api/health', (req, res) => {
     res.json({
