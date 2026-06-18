@@ -616,6 +616,45 @@ setInterval(() => { if (password) loadOrders(); }, 15000);
 </html>`;
 }
 
+// ====== 支付凭证上传 ======
+const PAYMENT_PROOFS_DIR = path.join(__dirname, 'payment-proofs');
+if (!fs.existsSync(PAYMENT_PROOFS_DIR)) {
+    fs.mkdirSync(PAYMENT_PROOFS_DIR, { recursive: true });
+}
+app.use('/payment-proofs', express.static(PAYMENT_PROOFS_DIR));
+
+app.post('/api/upload-payment-proof', (req, res) => {
+    const { image, orderNo } = req.body;
+    if (!image || !orderNo) {
+        return res.status(400).json({ error: '缺少图片或订单号' });
+    }
+
+    const matches = image.match(/^data:image\/(.*);base64,(.*)$/);
+    if (!matches) {
+        return res.status(400).json({ error: '图片格式无效' });
+    }
+
+    const ext = matches[1] === 'jpeg' ? 'jpg' : (matches[1] || 'png');
+    const base64Data = matches[2];
+    const filename = `proof_${orderNo}_${Date.now()}.${ext}`;
+    const filepath = path.join(PAYMENT_PROOFS_DIR, filename);
+
+    fs.writeFile(filepath, base64Data, 'base64', (err) => {
+        if (err) {
+            console.error('❌ 保存支付凭证失败:', err.message);
+            return res.status(500).json({ error: '保存失败' });
+        }
+        const imageUrl = `${req.protocol}://${req.get('host')}/payment-proofs/${filename}`;
+        // 更新服务端订单的支付凭证
+        const order = serverOrders.find(o => o.orderNo === orderNo);
+        if (order) {
+            order.paymentProof = imageUrl;
+        }
+        console.log(`💰 支付凭证已保存: ${orderNo} → ${filename}`);
+        res.json({ url: imageUrl });
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`🍸 Life In. 鸡尾酒定制系统 → http://localhost:${PORT}`);
     console.log(`🎨 ARK API（图片生成）: ${ARK_API_KEY ? '✅ 已配置' : '❌ 未配置'} | 模型: ${ARK_MODEL}`);

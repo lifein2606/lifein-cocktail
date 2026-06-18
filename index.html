@@ -1739,6 +1739,60 @@
         .order-cancel-btn:active {
             background: rgba(255,80,80,0.25);
         }
+        .order-upload-btn {
+            padding: 5px 14px;
+            border: 1px solid rgba(80,200,120,0.3);
+            background: rgba(80,200,120,0.1);
+            color: #50c878;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .order-upload-btn:active {
+            background: rgba(80,200,120,0.25);
+        }
+        .order-proof-img {
+            width: 60px; height: 60px;
+            border-radius: 6px;
+            object-fit: cover;
+            margin-top: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        /* 下单弹窗内的收款码 */
+        .contact-qr-row {
+            display: flex; gap: 8px; justify-content: center;
+            margin: 10px 0 6px;
+        }
+        .contact-qr-row img {
+            width: 90px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .contact-qr-label {
+            font-size: 10px; color: #888; text-align: center;
+            margin-bottom: 10px;
+        }
+        .contact-upload-row {
+            display: flex; gap: 8px; align-items: center;
+            margin: 8px 0 4px;
+        }
+        .contact-upload-btn {
+            flex: 1; padding: 10px;
+            border: 1px dashed rgba(80,200,120,0.4);
+            background: rgba(80,200,120,0.06);
+            color: #50c878;
+            border-radius: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .contact-proof-preview {
+            width: 50px; height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
         .orders-empty {
             text-align: center;
             padding: 48px 20px 24px;
@@ -1874,6 +1928,52 @@
             background: rgba(255,255,255,0.05);
             border-color: var(--accent);
             color: var(--accent);
+        }
+
+        /* 收款码区域 */
+        .pay-qrcodes {
+            width: calc(100% - 48px);
+            max-width: 360px;
+            margin: 20px auto 16px;
+            background: var(--surface);
+            border: 1px solid rgba(240,160,80,0.15);
+            border-radius: 16px;
+            padding: 16px;
+        }
+        .pay-qr-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .pay-qr-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .pay-qr-item {
+            flex: 1;
+            text-align: center;
+        }
+        .pay-qr-item img {
+            width: 100%;
+            max-width: 130px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .pay-qr-item span {
+            display: block;
+            font-size: 11px;
+            color: var(--text2);
+            margin-top: 6px;
+        }
+        .pay-qr-tip {
+            font-size: 11px;
+            color: var(--text2);
+            text-align: center;
+            margin-top: 10px;
+            opacity: 0.7;
         }
 
         /* 随便看看 列表页 */
@@ -2022,6 +2122,22 @@
     </div>
 
     <button class="browse-btn" id="btnBrowse">👀 还没有想法，随便看看</button>
+
+    <!-- 收款码 -->
+    <div class="pay-qrcodes">
+        <div class="pay-qr-title">💳 扫码支付</div>
+        <div class="pay-qr-row">
+            <div class="pay-qr-item">
+                <img src="wechat-pay.png" alt="微信支付">
+                <span>微信支付</span>
+            </div>
+            <div class="pay-qr-item">
+                <img src="alipay.png" alt="支付宝">
+                <span>支付宝</span>
+            </div>
+        </div>
+        <div class="pay-qr-tip">下单后请上传支付凭证以便确认</div>
+    </div>
 </div>
 
 <!-- 随便看看列表页 -->
@@ -2136,6 +2252,17 @@
         <p>方便我们确认订单和通知您取酒</p>
         <input type="text" id="contactInput" placeholder="手机号 / 微信号" maxlength="30" autocomplete="off">
         <div class="contact-error" id="contactError">请填写联系方式</div>
+        <div class="contact-qr-row">
+            <img src="wechat-pay.png" alt="微信支付">
+            <img src="alipay.png" alt="支付宝">
+        </div>
+        <div class="contact-qr-label">扫码支付后上传凭证，可加快确认</div>
+        <div class="contact-upload-row">
+            <label class="contact-upload-btn" id="contactUploadLabel">📷 上传支付凭证（可选）
+                <input type="file" accept="image/*" id="contactProofInput" style="display:none">
+            </label>
+            <img class="contact-proof-preview" id="contactProofPreview" src="" style="display:none" alt="">
+        </div>
         <div class="contact-btns">
             <button class="contact-cancel" id="contactCancel">取消</button>
             <button class="contact-submit" id="contactSubmit">确认下单</button>
@@ -3120,8 +3247,26 @@ document.getElementById('btnCheckout').addEventListener('click', () => {
     // 弹出联系方式弹窗
     document.getElementById('contactInput').value = localStorage.getItem('lifeInContact') || '';
     document.getElementById('contactError').style.display = 'none';
+    document.getElementById('contactProofPreview').style.display = 'none';
+    document.getElementById('contactProofInput').value = '';
+    pendingProofBase64 = '';
     document.getElementById('contactOverlay').classList.add('active');
     setTimeout(() => document.getElementById('contactInput').focus(), 300);
+});
+
+// 支付凭证选择
+let pendingProofBase64 = '';
+document.getElementById('contactProofInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        pendingProofBase64 = ev.target.result;
+        document.getElementById('contactProofPreview').src = pendingProofBase64;
+        document.getElementById('contactProofPreview').style.display = '';
+        document.getElementById('contactUploadLabel').textContent = '✅ 已选择凭证';
+    };
+    reader.readAsDataURL(file);
 });
 
 // 联系方式弹窗 - 取消
@@ -3167,7 +3312,20 @@ document.getElementById('contactSubmit').addEventListener('click', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
-    }).catch(() => {}); // 失败静默，不影响本地
+    }).catch(() => {});
+    // 如果有支付凭证，上传
+    if (pendingProofBase64) {
+        fetch('/api/upload-payment-proof', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: pendingProofBase64, orderNo: order.orderNo })
+        }).then(r => r.json()).then(data => {
+            if (data.url) {
+                order.paymentProof = data.url;
+                saveOrders(orders);
+            }
+        }).catch(() => {});
+    }
     // 清空购物车
     saveCart([]);
     renderCartDrawer();
@@ -3237,16 +3395,44 @@ function renderOrdersDrawer() {
                 <span class="order-card-status ${statusClass}">${statusLabel}</span>
             </div>
             ${itemsHtml}
+            ${order.paymentProof ? `<img class="order-proof-img" src="${order.paymentProof}" alt="支付凭证" onclick="window.open('${order.paymentProof}','_blank')">` : ''}
             <div class="order-card-footer">
                 <span class="label">合计</span>
-                <div style="display:flex;align-items:center;gap:10px">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
                     <span class="amount">¥${order.total}</span>
-                    ${order.status === 'pending' ? `<button class="order-cancel-btn" onclick="cancelOrder('${order.orderNo}')">取消订单</button>` : ''}
+                    ${order.status === 'pending' && !order.paymentProof ? `<label class="order-upload-btn" style="margin:0">📷 凭证<input type="file" accept="image/*" style="display:none" onchange="uploadOrderProof(event,'${order.orderNo}')"></label>` : ''}
+                    ${order.status === 'pending' ? `<button class="order-cancel-btn" onclick="cancelOrder('${order.orderNo}')">取消</button>` : ''}
                 </div>
             </div>
         </div>`;
     }
     body.innerHTML = html;
+}
+
+// 上传订单支付凭证
+function uploadOrderProof(event, orderNo) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const base64 = ev.target.result;
+        fetch('/api/upload-payment-proof', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64, orderNo })
+        }).then(r => r.json()).then(data => {
+            if (data.url) {
+                const orders = getOrders();
+                const order = orders.find(o => o.orderNo === orderNo);
+                if (order) {
+                    order.paymentProof = data.url;
+                    saveOrders(orders);
+                    renderOrdersDrawer();
+                }
+            }
+        }).catch(() => alert('上传失败，请重试'));
+    };
+    reader.readAsDataURL(file);
 }
 
 // 取消订单
