@@ -617,8 +617,8 @@ setInterval(() => { if (password) loadOrders(); }, 15000);
 }
 
 app.listen(PORT, () => {
-    console.log(\`🍸 Life In. 鸡尾酒定制系统 → http://localhost:\${PORT}\`);
-    console.log(\`🎨 ARK API（图片生成）: \${ARK_API_KEY ? '✅ 已配置' : '❌ 未配置'} | 模型: \${ARK_MODEL}\`);
-    console.log(\`💬 Coze API（AI聊天）: \${COZE_API_TOKEN && COZE_BOT_ID ? '✅ 已配置' : '❌ 未配置'} | Bot: \${COZE_BOT_ID || '未设置'}\`);
-    console.log(\`📋 管理后台: http://localhost:\${PORT}/admin | 密码: \${ADMIN_PASSWORD}\`);
+    console.log(`🍸 Life In. 鸡尾酒定制系统 → http://localhost:${PORT}`);
+    console.log(`🎨 ARK API（图片生成）: ${ARK_API_KEY ? '✅ 已配置' : '❌ 未配置'} | 模型: ${ARK_MODEL}`);
+    console.log(`💬 Coze API（AI聊天）: ${COZE_API_TOKEN && COZE_BOT_ID ? '✅ 已配置' : '❌ 未配置'} | Bot: ${COZE_BOT_ID || '未设置'}`);
+    console.log(`📋 管理后台: http://localhost:${PORT}/admin | 密码: ${ADMIN_PASSWORD}`);
 });
