@@ -1725,6 +1725,20 @@
             font-weight: 800;
             color: var(--accent);
         }
+        .order-cancel-btn {
+            padding: 5px 14px;
+            border: 1px solid rgba(255,80,80,0.3);
+            background: rgba(255,80,80,0.1);
+            color: #ff5050;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .order-cancel-btn:active {
+            background: rgba(255,80,80,0.25);
+        }
         .orders-empty {
             text-align: center;
             padding: 48px 20px 24px;
@@ -3225,11 +3239,30 @@ function renderOrdersDrawer() {
             ${itemsHtml}
             <div class="order-card-footer">
                 <span class="label">合计</span>
-                <span class="amount">¥${order.total}</span>
+                <div style="display:flex;align-items:center;gap:10px">
+                    <span class="amount">¥${order.total}</span>
+                    ${order.status === 'pending' ? `<button class="order-cancel-btn" onclick="cancelOrder('${order.orderNo}')">取消订单</button>` : ''}
+                </div>
             </div>
         </div>`;
     }
     body.innerHTML = html;
+}
+
+// 取消订单
+function cancelOrder(orderNo) {
+    const orders = getOrders();
+    const order = orders.find(o => o.orderNo === orderNo);
+    if (!order || order.status !== 'pending') return;
+    order.status = 'cancelled';
+    saveOrders(orders);
+    renderOrdersDrawer();
+    // 同步到服务端
+    fetch('/api/orders/' + orderNo + '/status', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled', password: '' })
+    }).catch(() => {});
 }
 
 // 从服务端同步订单状态
