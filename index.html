@@ -440,6 +440,71 @@
             border-color: rgba(240,160,80,0.4);
         }
 
+        .chat-attach-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .chat-attach-btn:active {
+            background: rgba(0,0,0,0.08);
+        }
+
+        .chat-image-preview {
+            display: none;
+            padding: 6px 12px 0;
+            position: relative;
+        }
+        .chat-image-preview.active {
+            display: block;
+        }
+        .chat-image-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e8e0d4;
+        }
+        .chat-image-remove {
+            position: absolute;
+            top: 2px;
+            left: 76px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-voice-status {
+            display: none;
+            text-align: center;
+            padding: 4px 0;
+            font-size: 12px;
+            color: #c9a96e;
+        }
+        .chat-voice-status.active {
+            display: block;
+        }
+
+        .chat-msg .chat-msg-image {
+            max-width: 180px;
+            max-height: 180px;
+            border-radius: 8px;
+            margin-top: 4px;
+            cursor: pointer;
+        }
+
         .chat-send {
             background: var(--accent);
             border: none;
@@ -1089,6 +1154,732 @@
             display: block;
         }
 
+        /* === 下单确认区 === */
+        .confirm-section {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .confirm-section.active {
+            display: block;
+        }
+        .confirm-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+        .capacity-label {
+            font-size: 13px;
+            color: var(--text2);
+            margin-bottom: 10px;
+        }
+        .capacity-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .capacity-option {
+            flex: 1;
+            text-align: center;
+            background: var(--surface2);
+            border: 2px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 12px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .capacity-option:active {
+            transform: scale(0.96);
+        }
+        .capacity-option.selected {
+            border-color: var(--accent);
+            background: rgba(240,160,80,0.08);
+        }
+        .capacity-option .cap-ml {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .capacity-option .cap-label {
+            font-size: 11px;
+            color: var(--text2);
+        }
+        .capacity-option.selected .cap-ml {
+            color: var(--accent);
+        }
+        .price-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 14px 16px;
+            background: rgba(240,160,80,0.06);
+            border: 1px solid rgba(240,160,80,0.12);
+            border-radius: 12px;
+        }
+        .price-row .price-label {
+            font-size: 13px;
+            color: var(--text2);
+        }
+        .price-row .price-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .price-row .price-value .price-yen {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .btn-add-cart {
+            width: 100%;
+            padding: 16px 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 2px;
+        }
+        .btn-add-cart:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        .btn-add-cart:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* 加入购物车成功提示 */
+        .cart-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(20,20,30,0.95);
+            border: 1px solid rgba(240,160,80,0.3);
+            border-radius: 16px;
+            padding: 24px 32px;
+            text-align: center;
+            z-index: 999;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        .cart-toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .cart-toast-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+        .cart-toast-text {
+            font-size: 15px;
+            color: var(--text);
+            font-weight: 600;
+        }
+        .cart-toast-sub {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: 6px;
+        }
+
+        /* 浮动购物车图标 */
+        .cart-fab {
+            position: fixed;
+            bottom: 28px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            cursor: pointer;
+            z-index: 400;
+            box-shadow: 0 4px 20px rgba(240,160,80,0.3);
+            transition: transform 0.2s;
+        }
+        .cart-fab:active {
+            transform: scale(0.92);
+        }
+        .cart-fab-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 20px;
+            height: 20px;
+            background: var(--accent2);
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+        }
+        .cart-fab-badge.show {
+            display: flex;
+        }
+
+        /* 购物车抽屉 */
+        .cart-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,10,15,0.92);
+            z-index: 500;
+            overflow-y: auto;
+        }
+        .cart-overlay.active {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .cart-drawer {
+            width: 100%;
+            max-width: 480px;
+            max-height: 85vh;
+            background: var(--surface);
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .cart-drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        .cart-drawer-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .cart-drawer-close {
+            background: var(--surface2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: var(--text);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cart-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+        .cart-empty {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text2);
+            font-size: 14px;
+        }
+        .cart-empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        .cart-item {
+            display: flex;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            align-items: center;
+        }
+        .cart-item-img {
+            width: 56px;
+            height: 56px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: var(--surface2);
+        }
+        .cart-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .cart-item-name {
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cart-item-detail {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: 2px;
+        }
+        .cart-item-price {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+        .cart-item-qty {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex-shrink: 0;
+        }
+        .cart-item-qty button {
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--surface2);
+            color: var(--text);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .cart-item-qty button:active {
+            background: rgba(240,160,80,0.15);
+        }
+        .cart-item-qty .qty-minus {
+            border-radius: 6px 0 0 6px;
+        }
+        .cart-item-qty .qty-plus {
+            border-radius: 0 6px 6px 0;
+        }
+        .cart-item-qty .qty-num {
+            width: 32px;
+            height: 28px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: var(--surface2);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cart-item-subtotal {
+            font-size: 13px;
+            color: var(--text2);
+            margin-top: 2px;
+        }
+        .cart-item-remove {
+            background: none;
+            border: none;
+            color: var(--text2);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 4px 0 4px 8px;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+        .cart-drawer-footer {
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 16px 20px 24px;
+            flex-shrink: 0;
+        }
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 16px;
+        }
+        .cart-total-label {
+            font-size: 14px;
+            color: var(--text2);
+        }
+        .cart-total-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .cart-total-value .cart-total-yen {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .cart-btn-row {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-continue-shopping {
+            flex: 1;
+            padding: 14px 0;
+            background: var(--surface2);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-checkout {
+            flex: 1;
+            padding: 14px 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* 首页我的订单入口 */
+        .my-orders-btn {
+            width: 100%;
+            max-width: 480px;
+            padding: 14px 20px;
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            margin-bottom: 20px;
+        }
+        .my-orders-btn:active {
+            border-color: var(--accent);
+        }
+        .my-orders-btn-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .my-orders-btn-icon {
+            font-size: 20px;
+        }
+        .my-orders-btn-text {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .my-orders-btn-arrow {
+            font-size: 14px;
+            color: var(--text2);
+        }
+        .my-orders-badge {
+            background: var(--accent2);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+
+        /* 订单抽屉 */
+        .orders-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,10,15,0.92);
+            z-index: 500;
+            overflow-y: auto;
+        }
+        .orders-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .orders-drawer {
+            width: 92%;
+            max-width: 420px;
+            max-height: 80vh;
+            background: var(--surface);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .orders-drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        .orders-drawer-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .orders-drawer-close {
+            background: var(--surface2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: var(--text);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .orders-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+        .order-card {
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+        .order-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .order-card-id {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .order-card-time {
+            font-size: 12px;
+            color: var(--text2);
+        }
+        .order-card-status {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .order-card-status.pending {
+            background: rgba(240,160,80,0.15);
+            color: var(--accent);
+        }
+        .order-card-status.confirmed {
+            background: rgba(80,200,120,0.15);
+            color: #50c878;
+        }
+        .order-card-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        .order-card-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: var(--surface);
+        }
+        .order-card-item-info {
+            flex: 1;
+        }
+        .order-card-item-name {
+            font-weight: 500;
+        }
+        .order-card-item-detail {
+            font-size: 11px;
+            color: var(--text2);
+        }
+        .order-card-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: baseline;
+            gap: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .order-card-footer .label {
+            font-size: 13px;
+            color: var(--text2);
+        }
+        .order-card-footer .amount {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .orders-empty {
+            text-align: center;
+            padding: 48px 20px 24px;
+            color: var(--text2);
+            font-size: 14px;
+        }
+        .orders-empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        .orders-empty-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 28px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* 下单成功提示 */
+        .order-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(20,20,30,0.95);
+            border: 1px solid rgba(80,200,120,0.3);
+            border-radius: 16px;
+            padding: 24px 32px;
+            text-align: center;
+            z-index: 999;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        .order-toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .order-toast-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+        .order-toast-text {
+            font-size: 15px;
+            color: var(--text);
+            font-weight: 600;
+        }
+        .order-toast-sub {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: 6px;
+        }
+
+        /* 还没有想法 按钮 */
+        .browse-btn {
+            display: block;
+            width: calc(100% - 48px);
+            max-width: 360px;
+            margin: 12px auto 0;
+            padding: 13px 0;
+            background: transparent;
+            border: 1.5px dashed rgba(255,255,255,0.2);
+            color: var(--text2);
+            font-size: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .browse-btn:active {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* 随便看看 列表页 */
+        .page-browse {
+            display: none;
+            min-height: 100vh;
+            background: var(--bg);
+            padding: 0 0 80px;
+        }
+        .page-browse.active {
+            display: block;
+        }
+        .browse-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--bg);
+            padding: 16px 20px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .browse-header-title {
+            font-size: 18px;
+            font-weight: 700;
+            flex: 1;
+        }
+        .browse-grid {
+            padding: 12px 16px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .browse-card {
+            background: var(--surface2);
+            border-radius: 14px;
+            padding: 14px;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .browse-card:active {
+            transform: scale(0.97);
+        }
+        .browse-card-name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .browse-card-en {
+            font-size: 11px;
+            color: var(--text2);
+            margin-bottom: 8px;
+        }
+        .browse-card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .browse-card-tag {
+            font-size: 10px;
+            padding: 2px 8px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 8px;
+            color: var(--text2);
+        }
+        .browse-ask-ai {
+            display: block;
+            width: calc(100% - 32px);
+            margin: 16px auto 0;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent), #e06030);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+        .browse-ask-ai:active {
+            opacity: 0.9;
+        }
+
         /* 响应式 */
         @media (min-width: 600px) {
             .page-home {
@@ -1105,6 +1896,14 @@
         <img class="logo-img" src="data:image/png;base64,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" alt="Life In Logo">
         <div class="logo-title">Life in鸡尾酒定制系统</div>
         <div class="logo-sub">告诉我你想喝什么感觉的酒</div>
+    </div>
+
+    <div class="my-orders-btn" id="myOrdersBtn">
+        <div class="my-orders-btn-left">
+            <span class="my-orders-btn-icon">📋</span>
+            <span class="my-orders-btn-text">我的订单<span class="my-orders-badge" id="myOrdersBadge" style="display:none;">0</span></span>
+        </div>
+        <span class="my-orders-btn-arrow">›</span>
     </div>
 
     <div class="input-area">
@@ -1143,6 +1942,18 @@
             <div class="tag" data-text="不太会喝酒，想要轻一点好入口">🌸 轻柔易饮</div>
         </div>
     </div>
+
+    <button class="browse-btn" id="btnBrowse">👀 还没有想法，随便看看</button>
+</div>
+
+<!-- 随便看看列表页 -->
+<div class="page-browse" id="pageBrowse">
+    <div class="browse-header">
+        <button class="btn-back" id="btnBrowseBack">←</button>
+        <div class="browse-header-title">🔥 近期热销</div>
+    </div>
+    <div class="browse-grid" id="browseGrid"></div>
+    <button class="browse-ask-ai" id="btnBrowseAskAI">🤖 没有看好的，问问AI</button>
 </div>
 
 <!-- 加载遮罩 -->
@@ -1176,15 +1987,75 @@
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
+            <button class="chat-attach-btn" id="chatImageBtn" title="发送图片">📷</button>
+            <button class="chat-attach-btn" id="chatVoiceBtn" title="语音输入">🎤</button>
             <input type="text" id="chatInput" placeholder="描述你更想喝的感觉..." maxlength="200">
             <button class="chat-send" id="chatSend">发送</button>
+            <input type="file" id="chatImageFileInput" accept="image/*" style="display:none;">
         </div>
+        <div class="chat-image-preview" id="chatImagePreview">
+            <img id="chatImagePreviewImg" src="" alt="preview">
+            <button class="chat-image-remove" id="chatImageRemoveBtn">✕</button>
+        </div>
+        <div class="chat-voice-status" id="chatVoiceStatus">正在聆听...</div>
     </div>
 </div>
 
 <!-- 详情弹窗 -->
 <div class="detail-overlay" id="detailOverlay">
     <div class="detail-card" id="detailCard"></div>
+</div>
+
+<!-- 浮动购物车按钮 -->
+<div class="cart-fab" id="cartFab" style="display:none;">
+    🛒
+    <div class="cart-fab-badge" id="cartFabBadge">0</div>
+</div>
+
+<!-- 购物车抽屉 -->
+<div class="cart-overlay" id="cartOverlay">
+    <div class="cart-drawer">
+        <div class="cart-drawer-header">
+            <div class="cart-drawer-title">🛒 购物车</div>
+            <button class="cart-drawer-close" id="cartDrawerClose">✕</button>
+        </div>
+        <div class="cart-drawer-body" id="cartDrawerBody"></div>
+        <div class="cart-drawer-footer" id="cartDrawerFooter" style="display:none;">
+            <div class="cart-total-row">
+                <div class="cart-total-label">合计</div>
+                <div class="cart-total-value"><span class="cart-total-yen">¥</span><span id="cartTotalValue">0</span></div>
+            </div>
+            <div class="cart-btn-row">
+                <button class="btn-continue-shopping" id="btnContinueShopping">继续选购</button>
+                <button class="btn-checkout" id="btnCheckout">下单</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 加入购物车成功提示 -->
+<div class="cart-toast" id="cartToast">
+    <div class="cart-toast-icon">✅</div>
+    <div class="cart-toast-text">已加入购物车</div>
+    <div class="cart-toast-sub">点击右下角查看</div>
+</div>
+
+<!-- 我的订单抽屉 -->
+<div class="orders-overlay" id="ordersOverlay">
+    <div class="orders-drawer">
+        <div class="orders-drawer-header">
+            <div class="orders-drawer-title">📋 我的订单</div>
+            <button class="orders-drawer-close" id="ordersDrawerClose">✕</button>
+        </div>
+        <div class="orders-drawer-body" id="ordersDrawerBody"></div>
+    </div>
+</div>
+
+<!-- 下单成功提示 -->
+<div class="order-toast" id="orderToast">
+    <div class="order-toast-icon">🎉</div>
+    <div class="order-toast-text">下单成功</div>
+    <div class="order-toast-sub">可在首页查看订单</div>
 </div>
 
 <script>
@@ -1822,6 +2693,31 @@ function showDetail(c) {
                     <button class="btn-redo-mockup" id="btnRedoMockup">重新生成</button>
                 </div>
             </div>
+
+            <!-- 确认下单区 -->
+            <div class="confirm-section" id="confirmSection">
+                <div class="confirm-title">选择规格下单</div>
+                <div class="capacity-label">容量</div>
+                <div class="capacity-options" id="capacityOptions">
+                    <div class="capacity-option selected" data-ml="200" data-price="88">
+                        <div class="cap-ml">200ml</div>
+                        <div class="cap-label">小瓶</div>
+                    </div>
+                    <div class="capacity-option" data-ml="350" data-price="128">
+                        <div class="cap-ml">350ml</div>
+                        <div class="cap-label">中瓶</div>
+                    </div>
+                    <div class="capacity-option" data-ml="500" data-price="168">
+                        <div class="cap-ml">500ml</div>
+                        <div class="cap-label">大瓶</div>
+                    </div>
+                </div>
+                <div class="price-row">
+                    <div class="price-label">定制价</div>
+                    <div class="price-value"><span class="price-yen">¥</span><span id="priceValue">88</span></div>
+                </div>
+                <button class="btn-add-cart" id="btnAddCart">加入购物车</button>
+            </div>
         </div>
     `;
 
@@ -1922,6 +2818,7 @@ function showDetail(c) {
         generatingArea.style.display = 'block';
         document.querySelector('.generating-text').textContent = '正在生成瓶身样机，约需 15-30 秒...';
         mockupResult.classList.remove('active');
+        confirmSection.classList.remove('active');
         btnGenerate.disabled = true;
 
         try {
@@ -1929,6 +2826,8 @@ function showDetail(c) {
             if (result) {
                 mockupResultImg.src = result;
                 mockupResult.classList.add('active');
+                // 样机生成成功，显示下单确认区
+                confirmSection.classList.add('active');
             }
         } catch (err) {
             console.error('生成失败:', err);
@@ -1950,9 +2849,284 @@ function showDetail(c) {
     // 重新生成
     btnRedoMockup.addEventListener('click', () => {
         mockupResult.classList.remove('active');
+        confirmSection.classList.remove('active');
         btnGenerate.click();
     });
+
+    // ====== 下单确认区逻辑 ======
+    const confirmSection = document.getElementById('confirmSection');
+    const capacityOptions = document.getElementById('capacityOptions');
+    const priceValue = document.getElementById('priceValue');
+    const btnAddCart = document.getElementById('btnAddCart');
+    let selectedCapacity = 200;
+    let selectedPrice = 88;
+
+    // 容量选择
+    capacityOptions.addEventListener('click', (e) => {
+        const option = e.target.closest('.capacity-option');
+        if (!option) return;
+        capacityOptions.querySelectorAll('.capacity-option').forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedCapacity = parseInt(option.dataset.ml);
+        selectedPrice = parseInt(option.dataset.price);
+        priceValue.textContent = selectedPrice;
+    });
+
+    // 加入购物车
+    btnAddCart.addEventListener('click', () => {
+        const cartItem = {
+            id: Date.now(),
+            cocktailName: c.name_cn,
+            cocktailNameEn: c.name_en || '',
+            capacity: selectedCapacity,
+            price: selectedPrice,
+            mockupImage: mockupResultImg.src,
+            addedAt: new Date().toISOString()
+        };
+        addToCart(cartItem);
+        showCartToast();
+    });
 }
+
+// ========== 购物车管理 ==========
+function getCart() {
+    try {
+        return JSON.parse(localStorage.getItem('lifeInCart') || '[]');
+    } catch { return []; }
+}
+
+function saveCart(cart) {
+    localStorage.setItem('lifeInCart', JSON.stringify(cart));
+    updateCartBadge();
+}
+
+function addToCart(item) {
+    const cart = getCart();
+    // 检查是否已有同款（同鸡尾酒+同容量），有则增加数量
+    const existing = cart.find(i => i.cocktailName === item.cocktailName && i.capacity === item.capacity);
+    if (existing) {
+        existing.quantity = (existing.quantity || 1) + 1;
+    } else {
+        item.quantity = 1;
+        cart.push(item);
+    }
+    saveCart(cart);
+}
+
+function removeFromCart(id) {
+    let cart = getCart();
+    cart = cart.filter(item => item.id !== id);
+    saveCart(cart);
+    renderCartDrawer();
+}
+
+function updateCartBadge() {
+    const cart = getCart();
+    const fab = document.getElementById('cartFab');
+    const badge = document.getElementById('cartFabBadge');
+    const totalQty = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    if (totalQty > 0) {
+        fab.style.display = 'flex';
+        badge.textContent = totalQty;
+        badge.classList.add('show');
+    } else {
+        fab.style.display = 'none';
+        badge.classList.remove('show');
+    }
+    updateMyOrdersBtn();
+}
+
+function updateMyOrdersBtn() {
+    const orders = getOrders();
+    const badge = document.getElementById('myOrdersBadge');
+    if (orders.length > 0) {
+        badge.textContent = orders.length;
+        badge.style.display = 'inline';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function renderCartDrawer() {
+    const cart = getCart();
+    const body = document.getElementById('cartDrawerBody');
+    const footer = document.getElementById('cartDrawerFooter');
+    const totalEl = document.getElementById('cartTotalValue');
+
+    if (cart.length === 0) {
+        body.innerHTML = '<div class="cart-empty"><div class="cart-empty-icon">🛒</div>购物车是空的<br>去挑选一款鸡尾酒吧</div>';
+        footer.style.display = 'none';
+        return;
+    }
+
+    footer.style.display = 'block';
+    let total = 0;
+    let html = '';
+    for (const item of cart) {
+        const qty = item.quantity || 1;
+        const subtotal = item.price * qty;
+        total += subtotal;
+        const capLabel = item.capacity <= 200 ? '小瓶' : item.capacity <= 350 ? '中瓶' : '大瓶';
+        html += `
+        <div class="cart-item">
+            <img class="cart-item-img" src="${item.mockupImage || ''}" alt="${item.cocktailName}" onerror="this.style.display='none'">
+            <div class="cart-item-info">
+                <div class="cart-item-name">${item.cocktailName}</div>
+                <div class="cart-item-detail">${item.capacity}ml · ${capLabel} · 定制</div>
+                <div class="cart-item-subtotal">¥${item.price} × ${qty} = ¥${subtotal}</div>
+            </div>
+            <div class="cart-item-qty">
+                <button class="qty-minus" onclick="updateQty(${item.id}, -1)">−</button>
+                <div class="qty-num">${qty}</div>
+                <button class="qty-plus" onclick="updateQty(${item.id}, 1)">+</button>
+            </div>
+            <button class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑</button>
+        </div>`;
+    }
+    body.innerHTML = html;
+    totalEl.textContent = total;
+}
+
+function updateQty(id, delta) {
+    let cart = getCart();
+    const item = cart.find(i => i.id === id);
+    if (!item) return;
+    item.quantity = Math.max(1, (item.quantity || 1) + delta);
+    saveCart(cart);
+    renderCartDrawer();
+}
+
+function showCartToast() {
+    const toast = document.getElementById('cartToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
+// 购物车交互
+document.getElementById('cartFab').addEventListener('click', () => {
+    renderCartDrawer();
+    document.getElementById('cartOverlay').classList.add('active');
+});
+
+document.getElementById('cartDrawerClose').addEventListener('click', () => {
+    document.getElementById('cartOverlay').classList.remove('active');
+});
+
+document.getElementById('cartOverlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('cartOverlay')) {
+        document.getElementById('cartOverlay').classList.remove('active');
+    }
+});
+
+document.getElementById('btnContinueShopping').addEventListener('click', () => {
+    document.getElementById('cartOverlay').classList.remove('active');
+});
+
+document.getElementById('btnCheckout').addEventListener('click', () => {
+    const cart = getCart();
+    if (cart.length === 0) return;
+    // 创建订单
+    const order = {
+        id: Date.now(),
+        orderNo: 'LI' + Date.now().toString(36).toUpperCase(),
+        items: JSON.parse(JSON.stringify(cart)),
+        total: cart.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0),
+        status: 'pending',
+        createdAt: new Date().toISOString()
+    };
+    const orders = getOrders();
+    orders.unshift(order);
+    saveOrders(orders);
+    // 清空购物车
+    saveCart([]);
+    renderCartDrawer();
+    // 关闭购物车抽屉
+    document.getElementById('cartOverlay').classList.remove('active');
+    // 显示下单成功提示
+    const toast = document.getElementById('orderToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+});
+
+// ========== 订单管理 ==========
+function getOrders() {
+    try {
+        return JSON.parse(localStorage.getItem('lifeInOrders') || '[]');
+    } catch { return []; }
+}
+
+function saveOrders(orders) {
+    localStorage.setItem('lifeInOrders', JSON.stringify(orders));
+    updateMyOrdersBtn();
+}
+
+function renderOrdersDrawer() {
+    const orders = getOrders();
+    const body = document.getElementById('ordersDrawerBody');
+
+    if (orders.length === 0) {
+        body.innerHTML = '<div class="orders-empty"><div class="orders-empty-icon">📋</div>暂时没有订单<br>快去选择定制吧 🍸<br><button class="orders-empty-btn" onclick="document.getElementById(\'ordersOverlay\').classList.remove(\'active\')">返回首页</button></div>';
+        return;
+    }
+
+    let html = '';
+    for (const order of orders) {
+        const d = new Date(order.createdAt);
+        const timeStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const statusLabel = order.status === 'pending' ? '待确认' : '已确认';
+        const statusClass = order.status === 'pending' ? 'pending' : 'confirmed';
+
+        let itemsHtml = '';
+        for (const item of order.items) {
+            const qty = item.quantity || 1;
+            const capLabel = item.capacity <= 200 ? '小瓶' : item.capacity <= 350 ? '中瓶' : '大瓶';
+            itemsHtml += `
+            <div class="order-card-item">
+                <img src="${item.mockupImage || ''}" alt="${item.cocktailName}" onerror="this.style.display='none'">
+                <div class="order-card-item-info">
+                    <div class="order-card-item-name">${item.cocktailName}</div>
+                    <div class="order-card-item-detail">${item.capacity}ml · ${capLabel} × ${qty}</div>
+                </div>
+            </div>`;
+        }
+
+        html += `
+        <div class="order-card">
+            <div class="order-card-header">
+                <div>
+                    <div class="order-card-id">${order.orderNo}</div>
+                    <div class="order-card-time">${timeStr}</div>
+                </div>
+                <span class="order-card-status ${statusClass}">${statusLabel}</span>
+            </div>
+            ${itemsHtml}
+            <div class="order-card-footer">
+                <span class="label">合计</span>
+                <span class="amount">¥${order.total}</span>
+            </div>
+        </div>`;
+    }
+    body.innerHTML = html;
+}
+
+// 我的订单交互
+document.getElementById('myOrdersBtn').addEventListener('click', () => {
+    renderOrdersDrawer();
+    document.getElementById('ordersOverlay').classList.add('active');
+});
+
+document.getElementById('ordersDrawerClose').addEventListener('click', () => {
+    document.getElementById('ordersOverlay').classList.remove('active');
+});
+
+document.getElementById('ordersOverlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('ordersOverlay')) {
+        document.getElementById('ordersOverlay').classList.remove('active');
+    }
+});
+
+// 页面加载时恢复购物车角标和订单按钮
+updateCartBadge();
 
 // ========== 样机生成 ==========
 async function generateMockup(cocktail, imageBase64) {
@@ -2423,6 +3597,77 @@ document.getElementById('btnBack').addEventListener('click', () => {
     pageHome.style.display = 'flex';
 });
 
+// ========== 随便看看 ==========
+const pageBrowse = document.getElementById('pageBrowse');
+const browseGrid = document.getElementById('browseGrid');
+
+// 热销列表：选取经典热门款（按知名度和大众接受度排序）
+const HOT_COCKTAILS = [
+    '莫吉托','玛格丽特','尼格罗尼','长岛冰茶','古典鸡尾酒',
+    '得其利','莫斯科骡子','龙舌兰日出','椰林飘香','蓝色珊瑚',
+    '曼哈顿','边车','金汤力','新加坡司令','教父',
+    '白俄罗斯','血腥玛丽','螺丝刀','汤姆柯林斯','威士忌酸',
+    '帕洛玛','薄荷茱莉普','阿佩罗喷溅','黑色莫吉托','浓缩咖啡马天尼'
+];
+
+function renderBrowseGrid() {
+    const cocktails = HOT_COCKTAILS.map(name => COCKTAIL_DB.find(c => c.name_cn === name)).filter(Boolean);
+    let html = '';
+    for (const c of cocktails) {
+        const tasteTags = [];
+        if (c.taste.sweet >= 3) tasteTags.push('甜');
+        if (c.taste.sour >= 3) tasteTags.push('酸');
+        if (c.taste.bitter >= 2) tasteTags.push('苦');
+        if (c.strength === 'light') tasteTags.push('轻柔');
+        else if (c.strength === 'very-strong') tasteTags.push('烈');
+        const familyMap = {sour:'酸酒',martini:'马天尼',highball:'嗨棒','old-fashioned':'古典',punch:'宾治',tiki:'提基',dessert:'甜品',spritz:'喷溅','long-drink':'长饮','frozen':'冰沙',refresher:'清爽',sparkling:'气泡'};
+        const familyTag = familyMap[c.family] || c.family;
+        const tags = [...tasteTags.slice(0,2), familyTag].slice(0,3);
+        html += `<div class="browse-card" data-name="${c.name_cn}">
+            <div class="browse-card-name">${c.name_cn}</div>
+            <div class="browse-card-en">${c.name_en}</div>
+            <div class="browse-card-tags">${tags.map(t=>'<span class="browse-card-tag">'+t+'</span>').join('')}</div>
+        </div>`;
+    }
+    browseGrid.innerHTML = html;
+
+    // 点击卡片 → 跳到详情
+    browseGrid.querySelectorAll('.browse-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const name = card.dataset.name;
+            const cocktail = COCKTAIL_DB.find(c => c.name_cn === name);
+            if (cocktail) {
+                pageBrowse.classList.remove('active');
+                pageHome.style.display = 'flex';
+                showDetail(cocktail);
+            }
+        });
+    });
+}
+
+document.getElementById('btnBrowse').addEventListener('click', () => {
+    renderBrowseGrid();
+    pageHome.style.display = 'none';
+    pageBrowse.classList.add('active');
+});
+
+document.getElementById('btnBrowseBack').addEventListener('click', () => {
+    pageBrowse.classList.remove('active');
+    pageHome.style.display = 'flex';
+});
+
+document.getElementById('btnBrowseAskAI').addEventListener('click', () => {
+    pageBrowse.classList.remove('active');
+    pageHome.style.display = 'flex';
+    // 打开聊天
+    setTimeout(() => {
+        chatOverlay.classList.add('active');
+        if (chatMessages.children.length === 0) {
+            appendChatMessage('bot', '嗨！不知道喝什么？告诉我你喜欢什么口味，我来帮你推荐 🍸');
+        }
+    }, 200);
+});
+
 // ========== AI 聊天功能 ==========
 let chatHistory = [];
 let lastSearchProfile = null;
@@ -2437,6 +3682,101 @@ const chatInput = document.getElementById('chatInput');
 const chatSend = document.getElementById('chatSend');
 const chatClose = document.getElementById('chatClose');
 const btnChatMore = document.getElementById('btnChatMore');
+
+// ====== 聊天图片上传 ======
+const chatImageBtn = document.getElementById('chatImageBtn');
+const chatImageFileInput = document.getElementById('chatImageFileInput');
+const chatImagePreview = document.getElementById('chatImagePreview');
+const chatImagePreviewImg = document.getElementById('chatImagePreviewImg');
+const chatImageRemoveBtn = document.getElementById('chatImageRemoveBtn');
+let chatUploadedImageBase64 = null;
+
+chatImageBtn.addEventListener('click', () => {
+    chatImageFileInput.click();
+});
+
+chatImageFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+        alert('图片不能超过 5MB');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        chatUploadedImageBase64 = ev.target.result;
+        chatImagePreviewImg.src = chatUploadedImageBase64;
+        chatImagePreview.classList.add('active');
+    };
+    reader.readAsDataURL(file);
+});
+
+chatImageRemoveBtn.addEventListener('click', () => {
+    chatUploadedImageBase64 = null;
+    chatImagePreviewImg.src = '';
+    chatImagePreview.classList.remove('active');
+    chatImageFileInput.value = '';
+});
+
+// ====== 聊天语音输入 ======
+const chatVoiceBtn = document.getElementById('chatVoiceBtn');
+const chatVoiceStatus = document.getElementById('chatVoiceStatus');
+let chatRecording = false;
+let chatRecognition = null;
+
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    chatRecognition = new SpeechRecognition();
+    chatRecognition.lang = 'zh-CN';
+    chatRecognition.interimResults = true;
+    chatRecognition.continuous = false;
+    chatRecognition.maxAlternatives = 1;
+
+    chatRecognition.onstart = () => {
+        chatRecording = true;
+        chatVoiceBtn.style.background = 'rgba(240,160,80,0.2)';
+        chatVoiceStatus.classList.add('active');
+        chatVoiceStatus.textContent = '正在聆听...';
+    };
+
+    chatRecognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        const current = chatInput.value.trim();
+        chatInput.value = current ? current + '，' + transcript : transcript;
+    };
+
+    chatRecognition.onend = () => {
+        chatRecording = false;
+        chatVoiceBtn.style.background = '';
+        chatVoiceStatus.classList.remove('active');
+    };
+
+    chatRecognition.onerror = (event) => {
+        chatRecording = false;
+        chatVoiceBtn.style.background = '';
+        chatVoiceStatus.classList.remove('active');
+        if (event.error === 'not-allowed') {
+            chatVoiceStatus.textContent = '⚠️ 请允许麦克风权限';
+            chatVoiceStatus.classList.add('active');
+            setTimeout(() => chatVoiceStatus.classList.remove('active'), 3000);
+        }
+    };
+
+    chatVoiceBtn.addEventListener('click', () => {
+        if (chatRecording) {
+            chatRecognition.stop();
+        } else {
+            chatRecognition.start();
+        }
+    });
+} else {
+    chatVoiceBtn.style.opacity = '0.4';
+    chatVoiceBtn.style.cursor = 'not-allowed';
+    chatVoiceBtn.title = '当前浏览器不支持语音输入';
+}
 
 // AI提问策略：本地fallback（Coze API不可用时使用）
 function generateAIQuestion(profile, history) {
@@ -2465,10 +3805,14 @@ function generateAIQuestion(profile, history) {
     return '我再帮你想想——你有没有什么绝对不想碰的味道？比如太苦的、太甜的？';
 }
 
-function addChatMsg(text, type, resultCards) {
+function addChatMsg(text, type, resultCards, imageUrl) {
     const div = document.createElement('div');
     div.className = `chat-msg ${type}`;
-    let html = text;
+    let html = '';
+    if (imageUrl && type === 'user') {
+        html += `<img class="chat-msg-image" src="${imageUrl}" alt="用户图片">`;
+    }
+    html += text;
     if (resultCards && resultCards.length > 0) {
         resultCards.forEach(c => {
             html += `<div class="chat-result-card" data-name="${c.name_cn}">
@@ -2581,11 +3925,39 @@ function openChat() {
 
 async function handleChatSend() {
     const text = chatInput.value.trim();
-    if (!text || chatSending) return;
+    const pendingImage = chatUploadedImageBase64; // 获取待发送图片
+    if ((!text && !pendingImage) || chatSending) return;
 
     chatInput.value = '';
-    addChatMsg(text, 'user');
-    chatHistory.push(text);
+
+    // 如果有图片，先上传到服务器获取URL
+    let chatImageUrl = null;
+    if (pendingImage) {
+        // 在消息中显示图片
+        addChatMsg(text || '(发送了一张图片)', 'user', null, pendingImage);
+        chatUploadedImageBase64 = null;
+        chatImagePreview.classList.remove('active');
+        chatImagePreviewImg.src = '';
+
+        // 上传图片到服务器
+        try {
+            const uploadResp = await fetch(`${API_BASE}/api/upload-chat-image`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: pendingImage })
+            });
+            const uploadData = await uploadResp.json();
+            if (uploadData.url) {
+                chatImageUrl = uploadData.url;
+            }
+        } catch (e) {
+            console.warn('图片上传失败，将仅发送文字');
+        }
+    } else {
+        addChatMsg(text, 'user');
+    }
+
+    chatHistory.push(text || '(图片)');
 
     // 先做本地匹配更新（无论API是否可用，主页面结果都需要更新）
     const combinedText = [lastSearchText, ...chatHistory].join('，');
@@ -2613,9 +3985,10 @@ async function handleChatSend() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message: buildCozeMessage(text),
+                    message: buildCozeMessage(text || '请看这张图片，帮我推荐鸡尾酒'),
                     conversation_id: cozeConversationId,
-                    user_id: 'web_user'
+                    user_id: 'web_user',
+                    image_url: chatImageUrl || undefined
                 })
             });
 

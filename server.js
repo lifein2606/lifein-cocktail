@@ -1,9 +1,17 @@
 const express = require('express');
 const path = require('path');
 const https = require('https');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// 聊天图片上传目录
+const UPLOADS_DIR = path.join(__dirname, 'chat-uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+app.use('/chat-uploads', express.static(UPLOADS_DIR));
 
 // ====== 配置区域 ======
 const ARK_API_KEY = process.env.ARK_API_KEY || '';
@@ -30,9 +38,37 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// ====== 聊天图片上传 ======
+app.post('/api/upload-chat-image', (req, res) => {
+    const { image } = req.body;
+    if (!image) {
+        return res.status(400).json({ error: '请提供图片' });
+    }
+
+    const matches = image.match(/^data:image\/(.*);base64,(.*)$/);
+    if (!matches) {
+        return res.status(400).json({ error: '图片格式无效' });
+    }
+
+    const ext = matches[1] === 'jpeg' ? 'jpg' : (matches[1] || 'png');
+    const base64Data = matches[2];
+    const filename = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 8)}.${ext}`;
+    const filepath = path.join(UPLOADS_DIR, filename);
+
+    fs.writeFile(filepath, base64Data, 'base64', (err) => {
+        if (err) {
+            console.error('❌ 保存聊天图片失败:', err.message);
+            return res.status(500).json({ error: '保存图片失败' });
+        }
+        const imageUrl = `${req.protocol}://${req.get('host')}/chat-uploads/${filename}`;
+        console.log(`📷 聊天图片已保存: ${filename}`);
+        res.json({ url: imageUrl });
+    });
+});
+
 // ====== AI 聊天（Coze Bot API） ======
 app.post('/api/chat', async (req, res) => {
-    const { message, conversation_id, user_id } = req.body;
+    const { message, conversation_id, user_id, image_url } = req.body;
 
     if (!COZE_API_TOKEN || !COZE_BOT_ID) {
         return res.status(503).json({
@@ -49,8 +85,8 @@ app.post('/api/chat', async (req, res) => {
     req.setTimeout(60000);
 
     try {
-        console.log(`💬 Coze Chat: "${message.slice(0, 30)}..."`);
-        const result = await callCozeChat(message, conversation_id, user_id);
+        console.log(`💬 Coze Chat: "${message.slice(0, 30)}..."${image_url ? ' [含图片]' : ''}`);
+        const result = await callCozeChat(message, conversation_id, user_id, image_url);
         console.log(`✅ AI回复成功`);
         res.json(result);
     } catch (err) {
@@ -60,17 +96,22 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // Coze Bot API 调用（非流式 + 轮询）
-function callCozeChat(message, conversationId, userId) {
+function callCozeChat(message, conversationId, userId, imageUrl) {
     return new Promise((resolve, reject) => {
+        // 构建消息列表（支持图片+文字）
+        const additionalMessages = [];
+        if (imageUrl) {
+            additionalMessages.push({ role: 'user', content: imageUrl, content_type: 'image' });
+        }
+        additionalMessages.push({ role: 'user', content: message, content_type: 'text' });
+
         const reqBody = JSON.stringify({
             bot_id: COZE_BOT_ID,
             user_id: userId || 'web_user',
             stream: false,
             auto_save_history: true,
             ...(conversationId ? { conversation_id: conversationId } : {}),
-            additional_messages: [
-                { role: 'user', content: message, content_type: 'text' }
-            ]
+            additional_messages: additionalMessages
         });
 
         const options = {
