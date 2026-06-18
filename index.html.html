@@ -1,0 +1,2673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life in鸡尾酒定制系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #14141f;
+            --surface2: #1e1e2e;
+            --accent: #f0a050;
+            --accent2: #e06070;
+            --text: #e8e8f0;
+            --text2: #8888a0;
+            --radius: 16px;
+        }
+
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* === 首页 === */
+        .page-home {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 60px 20px 40px;
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .logo-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 20px;
+            object-fit: cover;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 24px rgba(240,160,80,0.15);
+        }
+
+        .logo-title {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-sub {
+            font-size: 14px;
+            color: var(--text2);
+            margin-top: 8px;
+        }
+
+        /* 输入区 */
+        .input-area {
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 32px;
+        }
+
+        .input-box {
+            background: var(--surface);
+            border: 1px solid rgba(240, 160, 80, 0.15);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .input-box:focus-within {
+            border-color: rgba(240, 160, 80, 0.4);
+        }
+
+        .input-box textarea {
+            width: 100%;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-size: 16px;
+            line-height: 1.6;
+            resize: none;
+            min-height: 80px;
+            font-family: inherit;
+        }
+
+        .input-box textarea::placeholder {
+            color: var(--text2);
+        }
+
+        .input-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .char-count {
+            font-size: 12px;
+            color: var(--text2);
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 24px;
+            padding: 10px 28px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn-search:active {
+            transform: scale(0.96);
+            opacity: 0.9;
+        }
+
+        .btn-search:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* 快捷标签 */
+        .quick-tags {
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 32px;
+        }
+
+        .quick-tags-title {
+            font-size: 13px;
+            color: var(--text2);
+            margin-bottom: 12px;
+        }
+
+        .tags-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: var(--surface2);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .tag:active {
+            background: rgba(240, 160, 80, 0.15);
+            border-color: var(--accent);
+        }
+
+        /* 加载状态 */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10,10,15,0.85);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-icon {
+            font-size: 48px;
+            animation: shake 1.2s ease-in-out infinite;
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            font-size: 15px;
+            color: var(--text2);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+
+        /* === 结果页 === */
+        .page-results {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .page-results.active {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 12px;
+        }
+
+        .btn-back {
+            background: var(--surface2);
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .results-header-text {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* AI 评语 */
+        .ai-comment {
+            background: linear-gradient(135deg, rgba(240,160,80,0.08), rgba(224,96,112,0.08));
+            border: 1px solid rgba(240,160,80,0.15);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .ai-comment .ai-label {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .btn-chat-more {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 10px 0;
+            background: rgba(240,160,80,0.1);
+            border: 1px dashed rgba(240,160,80,0.3);
+            border-radius: 10px;
+            color: var(--accent);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-chat-more:active {
+            background: rgba(240,160,80,0.2);
+            transform: scale(0.98);
+        }
+
+        /* 歧义选项 */
+        .ambiguity-option {
+            display: inline-block;
+            background: var(--surface2);
+            border: 1px solid rgba(240,160,80,0.2);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 13px;
+            color: var(--accent);
+            cursor: pointer;
+            margin-top: 8px;
+            margin-right: 8px;
+            transition: all 0.2s;
+        }
+
+        .ambiguity-option:active {
+            background: rgba(240,160,80,0.15);
+        }
+
+        /* AI 聊天弹窗 */
+        .chat-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,10,15,0.92);
+            z-index: 300;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .chat-overlay.active {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .chat-card {
+            width: 100%;
+            max-width: 480px;
+            height: 85vh;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .chat-header-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .chat-close {
+            background: var(--surface2);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .chat-msg.ai {
+            align-self: flex-start;
+            background: var(--surface2);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-msg.user {
+            align-self: flex-end;
+            background: rgba(240,160,80,0.15);
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-msg .chat-result-card {
+            margin-top: 10px;
+            background: rgba(240,160,80,0.06);
+            border: 1px solid rgba(240,160,80,0.15);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .chat-msg .chat-result-card:active {
+            background: rgba(240,160,80,0.12);
+        }
+
+        .chat-msg .chat-result-card .crc-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .chat-msg .chat-result-card .crc-desc {
+            font-size: 12px;
+            color: var(--text2);
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px 20px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            background: var(--surface2);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 10px 16px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input-area input:focus {
+            border-color: rgba(240,160,80,0.4);
+        }
+
+        .chat-send {
+            background: var(--accent);
+            border: none;
+            border-radius: 24px;
+            padding: 10px 20px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .chat-send:active {
+            opacity: 0.85;
+        }
+
+        /* 鸡尾酒卡片 */
+        .cocktail-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .cocktail-card:active {
+            transform: scale(0.98);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-name {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .card-name-en {
+            font-size: 13px;
+            color: var(--text2);
+            margin-top: 2px;
+        }
+
+        .match-score {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: var(--text2);
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+
+        /* 风味雷达 */
+        .flavor-bar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            gap: 8px;
+        }
+
+        .flavor-label {
+            font-size: 12px;
+            color: var(--text2);
+            width: 28px;
+            text-align: right;
+        }
+
+        .flavor-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: var(--surface2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .flavor-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .flavor-bar-fill.sweet { background: #f0a050; }
+        .flavor-bar-fill.sour { background: #50c878; }
+        .flavor-bar-fill.bitter { background: #8060d0; }
+        .flavor-bar-fill.salty { background: #50a0e0; }
+        .flavor-bar-fill.umami { background: #e06070; }
+
+        /* 标签行 */
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .card-tag {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: var(--surface2);
+            color: var(--text2);
+        }
+
+        .card-tag.spirit {
+            background: rgba(240,160,80,0.12);
+            color: var(--accent);
+        }
+
+        /* 详情弹窗 */
+        .detail-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10,10,15,0.9);
+            z-index: 200;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .detail-overlay.active {
+            display: block;
+        }
+
+        .detail-card {
+            max-width: 480px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 24px;
+            position: relative;
+        }
+
+        .detail-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: var(--surface2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: var(--text);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .detail-name {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .detail-name-en {
+            font-size: 14px;
+            color: var(--text2);
+            margin-bottom: 16px;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-section-title {
+            font-size: 13px;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .detail-ingredients {
+            list-style: none;
+        }
+
+        .detail-ingredients li {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 14px;
+        }
+
+        .detail-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .detail-info-item {
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .detail-info-item .label {
+            font-size: 11px;
+            color: var(--text2);
+            margin-bottom: 4px;
+        }
+
+        .detail-info-item .value {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .detail-desc {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text2);
+        }
+
+        /* 开始定制按钮 */
+        .btn-customize {
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            letter-spacing: 2px;
+        }
+
+        .btn-customize:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        /* 定制面板 */
+        .customize-panel {
+            display: none;
+        }
+
+        .customize-panel.active {
+            display: block;
+        }
+
+        .customize-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .customize-back {
+            background: var(--surface2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .customize-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .customize-product {
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .customize-product-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .customize-product-info .cp-name {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .customize-product-info .cp-en {
+            font-size: 12px;
+            color: var(--text2);
+        }
+
+        /* 上传区域 */
+        .upload-area {
+            background: var(--surface2);
+            border: 2px dashed rgba(240,160,80,0.25);
+            border-radius: 16px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:active {
+            border-color: var(--accent);
+            background: rgba(240,160,80,0.05);
+        }
+
+        .upload-area.has-image {
+            padding: 16px;
+            border-style: solid;
+            border-color: rgba(240,160,80,0.3);
+        }
+
+        .upload-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(240,160,80,0.1);
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--accent);
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: var(--text2);
+        }
+
+        .upload-preview {
+            display: none;
+            position: relative;
+        }
+
+        .upload-preview.active {
+            display: block;
+        }
+
+        .upload-preview img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+        .upload-preview-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 生成按钮 */
+        .btn-generate {
+            width: 100%;
+            padding: 14px 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-generate:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        /* 生成中 */
+        .generating {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .generating-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--surface2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .generating-text {
+            font-size: 14px;
+            color: var(--text2);
+        }
+
+        /* 生成结果 */
+        .mockup-result {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .mockup-result.active {
+            display: block;
+        }
+
+        .mockup-result img {
+            width: 100%;
+            border-radius: 12px;
+        }
+
+        .mockup-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn-download-mockup {
+            flex: 1;
+            padding: 12px 0;
+            background: var(--surface2);
+            border: 1px solid rgba(240,160,80,0.2);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-redo-mockup {
+            flex: 1;
+            padding: 12px 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* API 未配置提示 */
+        .api-notice {
+            background: rgba(240,160,80,0.08);
+            border: 1px solid rgba(240,160,80,0.15);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text2);
+        }
+
+        .api-notice strong {
+            color: var(--accent);
+        }
+
+        /* 动画 */
+        .fade-in {
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 输入工具栏 */
+        .input-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-tool {
+            background: var(--surface2);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 16px;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            user-select: none;
+            padding: 0;
+        }
+
+        .btn-tool:active {
+            background: rgba(240,160,80,0.15);
+            border-color: var(--accent);
+        }
+
+        .btn-tool.recording {
+            background: rgba(224,96,112,0.2);
+            border-color: var(--accent2);
+            color: var(--accent2);
+        }
+
+        /* 声波图标 */
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 16px;
+        }
+
+        .voice-wave span {
+            display: block;
+            width: 3px;
+            background: currentColor;
+            border-radius: 2px;
+            height: 6px;
+            transition: height 0.15s ease;
+        }
+
+        .recording .voice-wave span {
+            animation: wave-bounce 0.8s ease-in-out infinite;
+        }
+
+        .recording .voice-wave span:nth-child(1) { animation-delay: 0s; }
+        .recording .voice-wave span:nth-child(2) { animation-delay: 0.12s; }
+        .recording .voice-wave span:nth-child(3) { animation-delay: 0.24s; }
+        .recording .voice-wave span:nth-child(4) { animation-delay: 0.36s; }
+        .recording .voice-wave span:nth-child(5) { animation-delay: 0.48s; }
+
+        @keyframes wave-bounce {
+            0%, 100% { height: 6px; }
+            50% { height: 16px; }
+        }
+
+        /* 图片预览 */
+        .image-preview-area {
+            display: none;
+            margin-top: 12px;
+            position: relative;
+        }
+
+        .image-preview-area.active {
+            display: block;
+        }
+
+        .image-preview-wrapper {
+            display: inline-block;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(240,160,80,0.2);
+        }
+
+        .image-preview-wrapper img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-preview-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-preview-hint {
+            font-size: 11px;
+            color: var(--text2);
+            margin-top: 6px;
+        }
+
+        /* 语音状态提示 */
+        .voice-status {
+            font-size: 12px;
+            color: var(--accent2);
+            margin-top: 4px;
+            display: none;
+        }
+
+        .voice-status.active {
+            display: block;
+        }
+
+        /* 响应式 */
+        @media (min-width: 600px) {
+            .page-home {
+                padding-top: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 首页 -->
+<div class="page-home" id="pageHome">
+    <div class="logo-area">
+        <img class="logo-img" src="data:image/png;base64,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" alt="Life In Logo">
+        <div class="logo-title">Life in鸡尾酒定制系统</div>
+        <div class="logo-sub">告诉我你想喝什么感觉的酒</div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-box">
+            <textarea id="userInput" placeholder="描述你想喝的鸡尾酒...&#10;比如：偏酸甜的、果香味、拍照好看的、度数别太高" maxlength="200" rows="3"></textarea>
+            <div class="image-preview-area" id="imagePreviewArea">
+                <div class="image-preview-wrapper">
+                    <img id="imagePreviewImg" src="" alt="预览">
+                    <button class="image-preview-remove" id="imageRemoveBtn">✕</button>
+                </div>
+                <div class="image-preview-hint">📷 AI 将从图片中识别鸡尾酒风格</div>
+            </div>
+            <div class="input-actions">
+                <span class="char-count" id="charCount">0/200</span>
+                <button class="btn-search" id="btnSearch" disabled>生成</button>
+            </div>
+            <div class="input-toolbar">
+                <button class="btn-tool" id="btnVoice"><div class="voice-wave"><span></span><span></span><span></span><span></span><span></span></div></button>
+                <button class="btn-tool" id="btnImage">＋</button>
+                <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
+            </div>
+            <div class="voice-status" id="voiceStatus">正在聆听...</div>
+        </div>
+    </div>
+
+    <div class="quick-tags">
+        <div class="quick-tags-title">快速选一个感觉</div>
+        <div class="tags-row">
+            <div class="tag" data-text="清爽酸甜，度数不高，好入口">🍋 清爽酸甜</div>
+            <div class="tag" data-text="烈一点，有深度，苦味也可以">🥃 烈而有深度</div>
+            <div class="tag" data-text="果味浓郁，颜色好看，适合拍照">🍹 颜值果味</div>
+            <div class="tag" data-text="暖一点，香料的，冬天喝">🕯️ 暖冬香料</div>
+            <div class="tag" data-text="椰子味，热带的感觉，像在度假">🏝️ 热带度假</div>
+            <div class="tag" data-text="经典干练，金酒基底，老派风格">🎩 经典干练</div>
+            <div class="tag" data-text="甜甜的，奶味的，像甜品一样">🍰 甜点风格</div>
+            <div class="tag" data-text="不太会喝酒，想要轻一点好入口">🌸 轻柔易饮</div>
+        </div>
+    </div>
+</div>
+
+<!-- 加载遮罩 -->
+<div class="loading-overlay" id="loadingOverlay">
+    <img class="logo-img" src="data:image/png;base64,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" alt="Life In" style="width:64px;height:64px;border-radius:14px;animation:shake 1.2s ease-in-out infinite;">
+    <div class="loading-text">正在为你寻找灵感...</div>
+</div>
+
+<!-- 结果页 -->
+<div class="page-results" id="pageResults">
+    <div class="results-header">
+        <button class="btn-back" id="btnBack">←</button>
+        <div class="results-header-text" id="resultsHeaderText">为你推荐</div>
+    </div>
+
+    <div class="ai-comment" id="aiComment" style="display:none;">
+        <div class="ai-label">🤖 AI 说</div>
+        <div id="aiCommentText"></div>
+        <button class="btn-chat-more" id="btnChatMore">没找到合适的？再跟 AI 聊一聊</button>
+    </div>
+
+    <div id="resultsContainer"></div>
+</div>
+
+<!-- AI 聊天弹窗 -->
+<div class="chat-overlay" id="chatOverlay">
+    <div class="chat-card">
+        <div class="chat-header">
+            <div class="chat-header-title">🤖 跟 AI 聊聊你的口味</div>
+            <button class="chat-close" id="chatClose">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="描述你更想喝的感觉..." maxlength="200">
+            <button class="chat-send" id="chatSend">发送</button>
+        </div>
+    </div>
+</div>
+
+<!-- 详情弹窗 -->
+<div class="detail-overlay" id="detailOverlay">
+    <div class="detail-card" id="detailCard"></div>
+</div>
+
+<script>
+// ========== 数据库（内嵌） ==========
+const COCKTAILS = []; // 将由外部 JSON 加载
+
+// ========== AI 解析逻辑（本地增强版） ==========
+function parseUserInput(text) {
+    const result = {
+        taste: { sweet: 0, sour: 0, bitter: 0, salty: 0, umami: 0 },
+        aroma: [],
+        color: [],
+        mouthfeel: [],
+        strength: '',
+        base_spirit: [],
+        occasion: [],
+        temperature: '',
+        vibe: ''
+    };
+
+    // 味道关键词 → 分值
+    const tasteMap = {
+        sweet: { words: ['甜','甜的','甜口','甜甜','糖','蜜','蜂蜜','糖浆','焦糖','枫糖'], score: 4 },
+        sour: { words: ['酸','酸的','酸口','柠檬','青柠','柑橘','酸橙','柚子','酸梅'], score: 4 },
+        bitter: { words: ['苦','苦的','苦口','金巴利','开胃','苦艾','咖啡'], score: 4 },
+        salty: { words: ['咸','盐','盐边','咸味'], score: 4 },
+        umami: { words: ['鲜','醇','浓厚','陈年','醇厚','深沉'], score: 4 }
+    };
+
+    for (const [taste, cfg] of Object.entries(tasteMap)) {
+        for (const kw of cfg.words) {
+            if (text.includes(kw)) {
+                const boost = (text.includes('偏') || text.includes('一点') || text.includes('微')) ? 3 : cfg.score;
+                result.taste[taste] = Math.max(result.taste[taste], boost);
+            }
+        }
+    }
+
+    // 复合味推理
+    if (text.includes('酸甜')) { result.taste.sweet = Math.max(result.taste.sweet, 3); result.taste.sour = Math.max(result.taste.sour, 3); }
+    if (text.includes('苦甜')) { result.taste.bitter = Math.max(result.taste.bitter, 3); result.taste.sweet = Math.max(result.taste.sweet, 2); }
+
+    // 香气
+    const aromaMap = {
+        citrus: ['柑橘','柠檬','柚子','橙','佛手柑','青柠','西柚','橙皮'],
+        floral: ['花','花香','玫瑰','薰衣草','接骨木','紫罗兰','樱花','茉莉'],
+        herbal: ['草','草本','薄荷','罗勒','杜松子','植物','迷迭香','百里香','艾草'],
+        spicy: ['香料','肉桂','姜','丁香','豆蔻','辣','胡椒','姜汁'],
+        fruity: ['果','果味','果香','水果','浆果','热带','芒果','菠萝','百香果','桃','苹果','香蕉','椰子','椰','荔枝','西瓜','莓','蔓越莓','石榴'],
+        smoky: ['烟熏','泥煤','烟','烤','熏','艾雷'],
+        nutty: ['坚果','杏仁','核桃','榛子','榛果','开心果'],
+        coffee: ['咖啡','浓缩','espresso'],
+        sweet: ['甜酒','香草','焦糖','蜂蜜','糖浆','vanilla','caramel']
+    };
+    for (const [key, words] of Object.entries(aromaMap)) {
+        for (const w of words) { if (text.includes(w) && !result.aroma.includes(key)) { result.aroma.push(key); break; } }
+    }
+
+    // 颜色
+    const colorMap = {
+        red: ['红','粉','粉色','红色','玫红','酒红','樱桃','草莓','蔓越莓','紫'],
+        gold: ['金','琥珀','棕色','黄','焦糖色','金色','铜色'],
+        blue: ['蓝','蓝色','蓝柑'],
+        green: ['绿','绿色','薄荷绿','抹茶','翡翠'],
+        orange: ['橙','橙色','橘色','日落'],
+        layered: ['渐变','分层','彩虹','渐变色'],
+        white: ['白','乳白','奶白','椰奶','奶','雪白','透明','清澈','clear'],
+        brown: ['深色','暗','黑','深棕','咖啡色','棕色'],
+        pink: ['粉红','粉','少女','桃粉']
+    };
+    for (const [key, words] of Object.entries(colorMap)) {
+        for (const w of words) { if (text.includes(w) && !result.color.includes(key)) { result.color.push(key); break; } }
+    }
+
+    // 口感
+    const mouthfeelMap = {
+        crisp: ['清爽','清脆','干净','利落','干','冰爽','凉爽','清冽','清透','解渴','解腻'],
+        smooth: ['顺滑','圆润','柔和','丝滑','温和','绵柔','柔顺'],
+        creamy: ['奶','绵密','浓稠','奶油','椰奶','丝绒','慕斯'],
+        sharp: ['锐利','烈','刺激','劲大','辛烈','凛冽'],
+        hot: ['辣','辛','灼热','烧','辛辣','暖身'],
+        bubbly: ['气泡','苏打','碳酸','起泡','气泡感']
+    };
+    for (const [key, words] of Object.entries(mouthfeelMap)) {
+        for (const w of words) { if (text.includes(w) && !result.mouthfeel.includes(key)) { result.mouthfeel.push(key); break; } }
+    }
+
+    // 烈度
+    const strengthMap = {
+        light: ['不会喝','轻','低度','度数低','别太高','无酒精','不喝酒','不要酒'],
+        mild: ['微醺','小酌','好入口','容易喝','轻度','温柔','初学者'],
+        medium: ['适中','中等','刚好'],
+        strong: ['烈','烈的','够劲','酒感强','浓烈','高度'],
+        'very-strong': ['非常烈','最烈的','一杯倒','特别烈','极致']
+    };
+    for (const [key, words] of Object.entries(strengthMap)) {
+        for (const w of words) { if (text.includes(w)) { result.strength = key; break; } }
+    }
+
+    // 基酒
+    const spiritMap = {
+        gin: ['金酒','杜松子','琴酒'],
+        vodka: ['伏特加'],
+        rum: ['朗姆','兰姆'],
+        tequila: ['龙舌兰','特基拉','梅斯卡尔'],
+        whiskey: ['威士忌','波本','黑麦','苏格兰'],
+        brandy: ['白兰地','干邑','雅文邑'],
+        wine: ['葡萄酒','起泡酒','香槟','梅酒','清酒'],
+        liqueur: ['利口酒','甜酒','百利甜','君度'],
+        'non-alcoholic': ['无酒精','不喝酒','不要酒','mocktail']
+    };
+    for (const [key, words] of Object.entries(spiritMap)) {
+        for (const w of words) { if (text.includes(w) && !result.base_spirit.includes(key)) { result.base_spirit.push(key); break; } }
+    }
+
+    // 场合
+    const occasionMap = {
+        aperitif: ['餐前','开胃','饭前','正餐前'],
+        digestif: ['餐后','消化','饭后','夜宵'],
+        party: ['派对','聚会','闺蜜','朋友','社交','蹦迪','狂欢'],
+        summer: ['夏天','海边','热','消暑','夏日','泳池','沙滩'],
+        winter: ['冬天','暖','冷','寒冷','冬日','圣诞','围炉'],
+        solo: ['一个人','独处','自己','累','下班','放松','独饮','宅'],
+        date: ['约会','浪漫','两人','情侣','纪念日','暧昧'],
+        classic: ['经典','老派','复古','传统']
+    };
+    for (const [key, words] of Object.entries(occasionMap)) {
+        for (const w of words) { if (text.includes(w) && !result.occasion.includes(key)) { result.occasion.push(key); break; } }
+    }
+
+    // 温度
+    if (text.includes('热') || text.includes('暖') || text.includes('加热')) result.temperature = 'hot';
+    if (text.includes('冰') || text.includes('冷') || text.includes('冻') || text.includes('加冰')) result.temperature = 'cold';
+
+    // === 语义推理 ===
+    if (text.includes('拍照') || text.includes('好看') || text.includes('颜值') || text.includes('出片')) {
+        if (!result.color.length) result.color = ['red', 'layered', 'blue'];
+        if (!result.occasion.includes('party')) result.occasion.push('party');
+    }
+    if (text.includes('度假') || text.includes('海滩') || text.includes('热带') || text.includes('海岛')) {
+        if (!result.occasion.includes('summer')) result.occasion.push('summer');
+        if (!result.mouthfeel.includes('crisp')) result.mouthfeel.push('crisp');
+        if (!result.aroma.includes('fruity')) result.aroma.push('fruity');
+    }
+    if (text.includes('女生') || text.includes('闺蜜') || text.includes('姐妹')) {
+        if (result.taste.sweet === 0) result.taste.sweet = 3;
+        if (!result.occasion.includes('party')) result.occasion.push('party');
+    }
+    if (text.includes('微醺') && !result.strength) result.strength = 'mild';
+    if (text.includes('甜品') || text.includes('甜点') || text.includes('像吃蛋糕') || text.includes('像甜品')) {
+        result.taste.sweet = Math.max(result.taste.sweet, 4);
+        if (!result.mouthfeel.includes('creamy')) result.mouthfeel.push('creamy');
+    }
+    if (text.includes('椰子') || text.includes('椰奶') || text.includes('奶味')) {
+        if (!result.aroma.includes('nutty')) result.aroma.push('nutty');
+        if (!result.mouthfeel.includes('creamy')) result.mouthfeel.push('creamy');
+    }
+    if (text.includes('薄荷') || text.includes('mint')) {
+        if (!result.aroma.includes('herbal')) result.aroma.push('herbal');
+        if (!result.mouthfeel.includes('crisp')) result.mouthfeel.push('crisp');
+    }
+    if (text.includes('咖啡') || text.includes('espresso')) {
+        result.taste.bitter = Math.max(result.taste.bitter, 3);
+        if (!result.aroma.includes('coffee')) result.aroma.push('coffee');
+    }
+    // 如果用户完全没给方向，给一个宽泛 baseline
+    const hasAnyPreference = Object.values(result.taste).some(v => v > 0)
+        || result.aroma.length > 0 || result.mouthfeel.length > 0
+        || result.strength || result.base_spirit.length > 0 || result.occasion.length > 0;
+    if (!hasAnyPreference) {
+        result.taste.sweet = 2;
+        result.taste.sour = 1;
+    }
+
+    return result;
+}
+
+// ========== 名称直接匹配 ==========
+function matchByName(text, cocktails) {
+    const t = text.trim().toLowerCase();
+    if (!t) return [];
+
+    // 构建名称索引：中文名、英文名、常见别名
+    const nameMap = [
+        // 中文名 → 别名/常见叫法
+        ['马天尼', ['马提尼', '马丁尼', 'martini']],
+        ['尼格罗尼', ['内格罗尼', 'negroni']],
+        ['古典鸡尾酒', ['古典', '老式', 'old fashioned', 'oldfashioned']],
+        ['曼哈顿', ['manhattan']],
+        ['得其利', ['代基里', '大吉利', 'daiquiri']],
+        ['莫吉托', ['mojito']],
+        ['玛格丽特', ['margarita']],
+        ['龙舌兰日出', ['tequila sunrise']],
+        ['帕洛玛', ['paloma']],
+        ['边车', ['sidecar']],
+        ['血腥玛丽', ['bloody mary']],
+        ['莫斯科骡子', ['moscow mule']],
+        ['螺丝刀', ['screwdriver']],
+        ['黑俄罗斯', ['black russian']],
+        ['白俄罗斯', ['white russian']],
+        ['新加坡司令', ['singapore sling']],
+        ['长岛冰茶', ['long island', 'long island iced tea']],
+        ['椰林飘香', ['pina colada', 'piña colada']],
+        ['迈泰', ['mai tai']],
+        ['性感海滩', ['sex on the beach']],
+        ['蓝色夏威夷', ['blue hawaii']],
+        ['蓝色珊瑚', ['blue lagoon']],
+        ['爱尔兰咖啡', ['irish coffee']],
+        ['汤姆柯林斯', ['tom collins']],
+        ['金汤力', ['gin and tonic', '金汤', 'gin tonic']],
+        ['威士忌酸', ['whiskey sour', 'whisky sour']],
+        ['薄荷朱利普', ['mint julep']],
+        ['僵尸', ['zombie']],
+        ['飓风', ['hurricane']],
+        ['古巴自由', ['cuba libre']],
+        ['黛绮莉', ['daiquiri']],
+        ['教父', ['godfather']],
+        ['教母', ['godmother']],
+        ['内格罗恩', ['naked and famous']],
+        ['伏魔使者', ['corpse reviver']],
+        ['床第之间', ['between the sheets']],
+        ['香槟鸡尾酒', ['champagne cocktail']],
+        ['罗伯罗伊', ['rob roy']],
+        ['杜松子司令', ['gimlet']],
+        ['干金酒', ['gin and tonic', 'g&t']],
+        ['布 Boulevardier', ['boulevardier']],
+        ['黑麦酸', ['rye sour']],
+        ['威士忌嗨棒', ['whiskey highball']],
+        ['金酒嗨棒', ['gin rickey']],
+        ['巴黎咖啡', ['parisian blonde']],
+        ['马提尼', ['vesper']],
+        ['阿拉伯沙漠', ['arabian desert']],
+        ['富士山', ['mt fuji', 'mount fuji']],
+        ['清酒嗨棒', ['sake highball']],
+        ['柚子青柠', ['yuzu sour']],
+        ['乌梅苏打', ['umeshu soda']],
+        ['紫薯拿铁', ['ube latte']],
+        ['伯爵夫人', ['earl grey teani']],
+    ];
+
+    const results = [];
+
+    for (const c of cocktails) {
+        let matched = false;
+        let matchScore = 100; // 名称直接匹配默认满分
+
+        // 1. 精确匹配中文名
+        if (c.name_cn && t === c.name_cn.toLowerCase()) {
+            matched = true;
+            matchScore = 100;
+        }
+        // 2. 精确匹配英文名
+        else if (c.name_en && t === c.name_en.toLowerCase()) {
+            matched = true;
+            matchScore = 100;
+        }
+        // 3. 输入包含中文名
+        else if (c.name_cn && t.includes(c.name_cn.toLowerCase())) {
+            matched = true;
+            matchScore = 98;
+        }
+        // 4. 输入包含英文名
+        else if (c.name_en && t.includes(c.name_en.toLowerCase())) {
+            matched = true;
+            matchScore = 98;
+        }
+        // 5. 中文名包含输入
+        else if (c.name_cn && c.name_cn.toLowerCase().includes(t)) {
+            matched = true;
+            matchScore = 95;
+        }
+        // 6. 英文名包含输入
+        else if (c.name_en && c.name_en.toLowerCase().includes(t)) {
+            matched = true;
+            matchScore = 95;
+        }
+
+        // 7. 别名匹配
+        if (!matched) {
+            for (const entry of nameMap) {
+                if (c.name_cn === entry[0]) {
+                    for (const alias of entry[1]) {
+                        if (t.includes(alias.toLowerCase()) || alias.toLowerCase().includes(t)) {
+                            matched = true;
+                            matchScore = 92;
+                            break;
+                        }
+                    }
+                    if (matched) break;
+                }
+            }
+        }
+
+        if (matched) {
+            results.push({ ...c, matchScore });
+        }
+    }
+
+    return results.sort((a, b) => b.matchScore - a.matchScore);
+}
+
+// ========== 匹配算法（增强版） ==========
+function matchCocktails(userProfile, cocktails, limit = 8) {
+    // 字段别名映射（数据库值 → 标准key）
+    const aromaAlias = { 'grapefruit': 'citrus', 'bergamot': 'citrus', 'anise': 'herbal', 'oak': 'smoky', 'cream': 'nutty', 'plum': 'fruity', 'cherry': 'fruity', 'vanilla': 'sweet', 'tropical': 'fruity', 'rice': 'earthy' };
+    const colorAlias = { 'brown': 'gold', 'clear': 'white', 'purple': 'red', 'pink': 'red', 'yellow': 'gold' };
+    const mouthfeelAlias = { 'astringent': 'sharp', 'rich': 'smooth', 'bubbly': 'crisp', 'fruity': 'smooth', 'thin': 'crisp' };
+    const spiritAlias = { 'sake': 'wine', 'mezcal': 'tequila' };
+
+    function normalizeList(list, aliasMap) {
+        if (!list) return [];
+        return list.map(v => aliasMap[v] || v);
+    }
+
+    const scored = cocktails.map(c => {
+        let score = 0;
+        let maxScore = 0;
+
+        // 标准化数据库字段
+        const cAroma = normalizeList(c.aroma, aromaAlias);
+        const cColor = normalizeList(c.color, colorAlias);
+        const cMouthfeel = normalizeList(c.mouthfeel, mouthfeelAlias);
+        const cSpirit = normalizeList(c.base_spirit, spiritAlias);
+
+        // 五味匹配（权重最高）
+        const tasteKeys = ['sweet', 'sour', 'bitter', 'salty', 'umami'];
+        let tasteHits = 0;
+        for (const key of tasteKeys) {
+            const userVal = userProfile.taste[key];
+            const cocktailVal = c.taste[key] || 0;
+            if (userVal > 0) {
+                maxScore += 5;
+                const diff = Math.abs(userVal - cocktailVal);
+                score += Math.max(0, 5 - diff);
+                if (diff <= 1) tasteHits++;
+            }
+        }
+
+        // 香气匹配
+        if (userProfile.aroma.length > 0) {
+            maxScore += 3;
+            const overlap = userProfile.aroma.filter(a => cAroma.includes(a));
+            score += overlap.length / userProfile.aroma.length * 3;
+        }
+
+        // 颜色匹配
+        if (userProfile.color.length > 0) {
+            maxScore += 2;
+            const userColors = userProfile.color.map(c => colorAlias[c] || c);
+            const overlap = userColors.filter(a => cColor.includes(a));
+            score += overlap.length / userColors.length * 2;
+        }
+
+        // 口感匹配
+        if (userProfile.mouthfeel.length > 0) {
+            maxScore += 2;
+            const userMouth = userProfile.mouthfeel.map(m => mouthfeelAlias[m] || m);
+            const overlap = userMouth.filter(a => cMouthfeel.includes(a));
+            score += overlap.length / userMouth.length * 2;
+        }
+
+        // 烈度匹配
+        if (userProfile.strength) {
+            maxScore += 2;
+            if (c.strength === userProfile.strength) score += 2;
+            else {
+                const order = ['light', 'mild', 'medium', 'strong', 'very-strong'];
+                const diff = Math.abs(order.indexOf(c.strength) - order.indexOf(userProfile.strength));
+                if (diff === 1) score += 1;
+            }
+        }
+
+        // 基酒匹配
+        if (userProfile.base_spirit.length > 0) {
+            maxScore += 2;
+            const userSpirits = userProfile.base_spirit.map(s => spiritAlias[s] || s);
+            const overlap = userSpirits.filter(a => cSpirit.includes(a));
+            score += overlap.length / userSpirits.length * 2;
+        }
+
+        // 场景匹配
+        if (userProfile.occasion.length > 0) {
+            maxScore += 1;
+            const cOccasion = c.occasion || [];
+            const overlap = userProfile.occasion.filter(a => cOccasion.includes(a));
+            score += overlap.length / userProfile.occasion.length * 1;
+        }
+
+        const matchPercent = maxScore > 0 ? Math.round(score / maxScore * 100) : 0;
+
+        return { ...c, matchScore: matchPercent };
+    });
+
+    return scored
+        .filter(c => c.matchScore > 10)
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, limit);
+}
+
+// ========== AI 评语生成 ==========
+function generateAIComment(userProfile, results, hasImage = false, isNameMatch = false) {
+    const tasteDesc = [];
+    if (userProfile.taste.sweet >= 3) tasteDesc.push('甜');
+    if (userProfile.taste.sour >= 3) tasteDesc.push('酸');
+    if (userProfile.taste.bitter >= 3) tasteDesc.push('苦');
+    if (tasteDesc.length === 0) tasteDesc.push('均衡');
+
+    const aromaDesc = userProfile.aroma.length > 0 
+        ? userProfile.aroma.slice(0, 2).map(a => {
+            const map = {citrus:'柑橘',floral:'花香',herbal:'草本',spicy:'香料',fruity:'果香',smoky:'烟熏',nutty:'坚果',earthy:'泥土',coffee:'咖啡',sweet:'甜香'};
+            return map[a] || a;
+        }).join('和') + '调'
+        : '';
+
+    if (results.length === 0) {
+        return '没找到完美匹配的酒款，试试换个说法？比如告诉我你偏好的口味、想要的氛围，或者喜欢的基酒。';
+    }
+
+    const top = results[0];
+    let comment = '';
+    
+    // 名称直接匹配时的评语
+    if (isNameMatch) {
+        comment = `「${top.name_cn}」${top.name_en ? '(' + top.name_en + ')' : ''}——${top.description}。`;
+        // 补充风味速览
+        const spiritNames = {gin:'金酒',vodka:'伏特加',rum:'朗姆酒',tequila:'龙舌兰',whiskey:'威士忌',brandy:'白兰地',wine:'葡萄酒',sake:'清酒',mezcal:'梅斯卡尔'};
+        const spirits = (top.base_spirit || []).map(s => spiritNames[s] || s).join('和');
+        if (spirits) comment += ` 基酒：${spirits}。`;
+        const strengthNames = {light:'轻柔',mild:'温和',medium:'中等',strong:'强劲','very-strong':'烈性'};
+        if (top.strength) comment += ` 烈度：${strengthNames[top.strength] || top.strength}。`;
+        if (results.length > 1) {
+            comment += ` 你可能还想试试这些相似风格 👇`;
+        }
+        return comment;
+    }
+    
+    if (hasImage) {
+        comment = `📷 从图片中捕捉到${userProfile.color.length > 0 ? userProfile.color.map(c => ({red:'红调',gold:'金调',blue:'蓝调',green:'绿调',orange:'橙调',white:'白色系',layered:'渐变'})[c] || c).join('和') + '，' : ''}`;
+        if (tasteDesc.some(t => t !== '均衡')) {
+            comment += `搭配${tasteDesc.join('')}口感，`;
+        }
+        comment += `首推「${top.name_cn}」——${top.description}。`;
+    } else {
+        comment = `听起来你想要${tasteDesc.join('')}为主的${aromaDesc ? aromaDesc + '，' : ''}风格。首推「${top.name_cn}」——${top.description}。`;
+    }
+    
+    if (results.length > 1) {
+        comment += ` 下面还有${results.length - 1}款风格相近的选择，可以都看看 👇`;
+    }
+
+    return comment;
+}
+
+// ========== 渲染 ==========
+function renderResults(results, aiComment) {
+    const container = document.getElementById('resultsContainer');
+    container.innerHTML = '';
+
+    // AI 评语
+    const aiCommentEl = document.getElementById('aiComment');
+    const aiCommentText = document.getElementById('aiCommentText');
+    if (aiComment) {
+        aiCommentText.textContent = aiComment;
+        aiCommentEl.style.display = 'block';
+    } else {
+        aiCommentEl.style.display = 'none';
+    }
+
+    if (results.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:60px 20px;color:var(--text2);">
+                <div style="font-size:48px;margin-bottom:16px;">🤔</div>
+                <div style="font-size:16px;margin-bottom:8px;">没找到匹配的酒款</div>
+                <div style="font-size:14px;">换个说法试试？</div>
+            </div>
+        `;
+        return;
+    }
+
+    results.forEach((c, i) => {
+        const card = document.createElement('div');
+        card.className = 'cocktail-card fade-in';
+        card.style.animationDelay = `${i * 0.1}s`;
+
+        const flavorBars = ['sweet', 'sour', 'bitter', 'salty', 'umami'].map(key => {
+            const val = c.taste[key] || 0;
+            if (val === 0) return '';
+            const labels = {sweet:'甜',sour:'酸',bitter:'苦',salty:'咸',umami:'鲜'};
+            return `
+                <div class="flavor-bar-row">
+                    <span class="flavor-label">${labels[key]}</span>
+                    <div class="flavor-bar-bg">
+                        <div class="flavor-bar-fill ${key}" style="width:${val * 20}%"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        const tags = [
+            ...(c.base_spirit || []).map(s => `<span class="card-tag spirit">${s}</span>`),
+            ...(c.aroma || []).slice(0, 3).map(a => `<span class="card-tag">${a}</span>`),
+            ...(c.mouthfeel || []).slice(0, 2).map(m => `<span class="card-tag">${m}</span>`),
+        ].join('');
+
+        card.innerHTML = `
+            <div class="card-top">
+                <div>
+                    <div class="card-name">${c.name_cn}</div>
+                    <div class="card-name-en">${c.name_en}</div>
+                </div>
+                <div class="match-score">${c.matchScore}% 匹配</div>
+            </div>
+            <div class="card-desc">${c.description}</div>
+            ${flavorBars}
+            <div class="card-tags">${tags}</div>
+        `;
+
+        card.addEventListener('click', () => showDetail(c));
+        container.appendChild(card);
+    });
+}
+
+function showDetail(c) {
+    const overlay = document.getElementById('detailOverlay');
+    const card = document.getElementById('detailCard');
+
+    const flavorBars = ['sweet', 'sour', 'bitter', 'salty', 'umami'].map(key => {
+        const val = c.taste[key] || 0;
+        const labels = {sweet:'甜',sour:'酸',bitter:'苦',salty:'咸',umami:'鲜'};
+        return `
+            <div class="flavor-bar-row">
+                <span class="flavor-label">${labels[key]}</span>
+                <div class="flavor-bar-bg">
+                    <div class="flavor-bar-fill ${key}" style="width:${val * 20}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const ingredients = (c.ingredients || []).map(i => `<li>${i}</li>`).join('');
+
+
+    // 提取材料名（去掉用量，只保留材料名称）
+    const ingredientNames = (c.ingredients || []).map(i => {
+        return i.replace(/^\s*\d+\.?\d*\s*(ml|cl|oz|dashes?|dash|滴|片|块|个|颗|条|根|支|勺|茶匙|汤匙)?\s*/i, '').trim();
+    }).filter(n => n.length > 0);
+    const materials = ingredientNames.map(m => `<li>${m}</li>`).join('');
+
+    card.innerHTML = `
+        <button class="detail-close" id="detailClose">✕</button>
+        
+        <div class="detail-name">${c.name_cn}</div>
+        ${c.name_en ? `<div class="detail-name-en">${c.name_en}</div>` : ''}
+
+        <div class="detail-section">
+            <div class="detail-section-title">风味描述</div>
+            <div class="detail-desc">${c.description}</div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-title">风味维度</div>
+            ${flavorBars}
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-title">使用材料</div>
+            <ul class="detail-ingredients">${materials}</ul>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-info-grid">
+                <div class="detail-info-item">
+                    <div class="label">用杯</div>
+                    <div class="value">${c.glass || '-'}</div>
+                </div>
+                <div class="detail-info-item">
+                    <div class="label">装饰</div>
+                    <div class="value">${c.garnish || '-'}</div>
+                </div>
+            </div>
+        </div>
+
+        ${c.origin_story ? `
+        <div class="detail-section">
+            <div class="detail-section-title">起源故事</div>
+            <div class="detail-desc">${c.origin_story}</div>
+        </div>
+        ` : ''}
+
+        <button class="btn-customize" id="btnCustomize">开始定制</button>
+
+        <!-- 定制面板 -->
+        <div class="customize-panel" id="customizePanel">
+            <div class="customize-header">
+                <button class="customize-back" id="customizeBack">←</button>
+                <div class="customize-title">瓶身定制</div>
+            </div>
+
+            <div class="customize-product">
+                <div class="customize-product-icon">🍷</div>
+                <div class="customize-product-info">
+                    <div class="cp-name">${c.name_cn}</div>
+                    <div class="cp-en">${c.name_en || ''}</div>
+                </div>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-placeholder" id="uploadPlaceholder">
+                    <div class="upload-icon">+</div>
+                    <div class="upload-text">上传你的照片</div>
+                    <div class="upload-hint">照片将作为瓶身标签背景</div>
+                </div>
+                <div class="upload-preview" id="uploadPreview">
+                    <img id="uploadPreviewImg" src="" alt="preview">
+                    <button class="upload-preview-remove" id="uploadRemove">✕</button>
+                </div>
+            </div>
+            <input type="file" id="customizeFileInput" accept="image/*" style="display:none">
+
+            <div class="api-notice" id="apiNotice" style="display:none">
+                <strong>提示：</strong>图片生成服务未连接，请启动后端服务并配置 ARK_API_KEY。
+            </div>
+
+            <button class="btn-generate" id="btnGenerate" disabled>生成定制样机</button>
+
+            <div class="generating" id="generatingArea" style="display:none">
+                <div class="generating-spinner"></div>
+                <div class="generating-text">正在生成瓶身样机...</div>
+            </div>
+
+            <div class="mockup-result" id="mockupResult">
+                <img id="mockupResultImg" src="" alt="mockup">
+                <div class="mockup-actions">
+                    <button class="btn-download-mockup" id="btnDownloadMockup">保存图片</button>
+                    <button class="btn-redo-mockup" id="btnRedoMockup">重新生成</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    overlay.classList.add('active');
+
+    // 关闭详情
+    document.getElementById('detailClose').addEventListener('click', () => {
+        overlay.classList.remove('active');
+    });
+
+    // ====== 定制功能 ======
+    let uploadedFile = null;
+    let uploadedBase64 = null;
+
+    const customizePanel = document.getElementById('customizePanel');
+    const btnCustomize = document.getElementById('btnCustomize');
+    const customizeBack = document.getElementById('customizeBack');
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('customizeFileInput');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const uploadPreviewImg = document.getElementById('uploadPreviewImg');
+    const uploadRemove = document.getElementById('uploadRemove');
+    const btnGenerate = document.getElementById('btnGenerate');
+    const generatingArea = document.getElementById('generatingArea');
+    const mockupResult = document.getElementById('mockupResult');
+    const mockupResultImg = document.getElementById('mockupResultImg');
+    const btnDownloadMockup = document.getElementById('btnDownloadMockup');
+    const btnRedoMockup = document.getElementById('btnRedoMockup');
+
+    // 进入定制
+    btnCustomize.addEventListener('click', () => {
+        // 隐藏详情内容，显示定制面板
+        card.querySelectorAll('.detail-section, .detail-name, .detail-name-en, .detail-close').forEach(el => el.style.display = 'none');
+        btnCustomize.style.display = 'none';
+        customizePanel.classList.add('active');
+        // 重新添加关闭按钮
+        const newClose = document.createElement('button');
+        newClose.className = 'detail-close';
+        newClose.id = 'detailCloseCustomize';
+        newClose.textContent = '✕';
+        card.insertBefore(newClose, card.firstChild);
+        newClose.addEventListener('click', () => {
+            overlay.classList.remove('active');
+        });
+    });
+
+    // 返回详情
+    customizeBack.addEventListener('click', () => {
+        customizePanel.classList.remove('active');
+        card.querySelectorAll('.detail-section, .detail-name, .detail-name-en').forEach(el => el.style.display = '');
+        btnCustomize.style.display = '';
+        const customClose = document.getElementById('detailCloseCustomize');
+        if (customClose) customClose.remove();
+        const originalClose = card.querySelector('.detail-close:not(#detailCloseCustomize)');
+        if (originalClose) originalClose.style.display = '';
+    });
+
+    // 上传图片
+    uploadArea.addEventListener('click', (e) => {
+        if (e.target === uploadRemove || e.target.closest('.upload-preview-remove')) return;
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        uploadedFile = file;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            uploadedBase64 = ev.target.result;
+            uploadPreviewImg.src = uploadedBase64;
+            uploadPlaceholder.style.display = 'none';
+            uploadPreview.classList.add('active');
+            uploadArea.classList.add('has-image');
+            btnGenerate.disabled = false;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // 移除图片
+    uploadRemove.addEventListener('click', (e) => {
+        e.stopPropagation();
+        uploadedFile = null;
+        uploadedBase64 = null;
+        uploadPlaceholder.style.display = '';
+        uploadPreview.classList.remove('active');
+        uploadArea.classList.remove('has-image');
+        btnGenerate.disabled = true;
+        fileInput.value = '';
+    });
+
+    // 生成样机
+    btnGenerate.addEventListener('click', async () => {
+        if (!uploadedBase64) return;
+
+        generatingArea.style.display = 'block';
+        document.querySelector('.generating-text').textContent = '正在生成瓶身样机，约需 15-30 秒...';
+        mockupResult.classList.remove('active');
+        btnGenerate.disabled = true;
+
+        try {
+            const result = await generateMockup(c, uploadedBase64);
+            if (result) {
+                mockupResultImg.src = result;
+                mockupResult.classList.add('active');
+            }
+        } catch (err) {
+            console.error('生成失败:', err);
+            alert(err.message || '生成失败，请稍后重试');
+        } finally {
+            generatingArea.style.display = 'none';
+            btnGenerate.disabled = false;
+        }
+    });
+
+    // 下载
+    btnDownloadMockup.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.href = mockupResultImg.src;
+        link.download = `${c.name_cn}_定制样机.png`;
+        link.click();
+    });
+
+    // 重新生成
+    btnRedoMockup.addEventListener('click', () => {
+        mockupResult.classList.remove('active');
+        btnGenerate.click();
+    });
+}
+
+// ========== 样机生成 ==========
+async function generateMockup(cocktail, imageBase64) {
+    // 自动检测后端地址：通过服务器访问时用当前域，直接打开文件时用 localhost
+    const API_BASE = window.location.protocol === 'file:'
+        ? 'http://localhost:3000'
+        : window.location.origin;
+
+    // 先压缩图片（原图可能很大，压缩到 1024px 加快传输）
+    const resizedImage = await resizeImageForAPI(imageBase64, 1024);
+
+    // 调用后端图片生成 API
+    try {
+        const resp = await fetch(`${API_BASE}/api/generate-mockup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                cocktail_name: cocktail.name_cn,
+                cocktail_name_en: cocktail.name_en || '',
+                volume: '275ml',
+                alcohol: '16% vol',
+                image: resizedImage
+            })
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            throw new Error(data.error || '生成失败');
+        }
+
+        if (data.image_url) {
+            return data.image_url;
+        }
+
+        throw new Error('未获取到图片');
+    } catch (err) {
+        console.error('图片生成失败:', err);
+
+        // 如果是网络错误，给出明确提示
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('fetch')) {
+            throw new Error('无法连接图片生成服务，请确保后端已启动（npm start）并配置了 ARK_API_KEY');
+        }
+
+        throw err;
+    }
+}
+
+// 客户端图片压缩：缩小尺寸 + 降低质量，减少传输时间
+function resizeImageForAPI(base64, maxSize) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            let w = img.width, h = img.height;
+            if (w > maxSize || h > maxSize) {
+                const ratio = Math.min(maxSize / w, maxSize / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => resolve(base64);
+        img.src = base64;
+    });
+}
+
+// 兼容性圆角矩形绘制
+function drawRoundRect(ctx, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+}
+
+// Canvas 简易样机预览（未接入 AI 时的降级方案）
+function generateMockupCanvas(cocktail, imageBase64) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const W = 800, H = 1100;
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            // 背景
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+            bgGrad.addColorStop(0, '#e8f5e9');
+            bgGrad.addColorStop(1, '#f5f0e0');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
+
+            // 瓶身轮廓
+            const bottleLeft = 220, bottleRight = 580;
+            const bottleTop = 80, bottleBottom = 980;
+            const neckLeft = 340, neckRight = 460;
+            const neckTop = 20;
+
+            // 瓶颈
+            ctx.beginPath();
+            ctx.moveTo(neckLeft, bottleTop);
+            ctx.lineTo(neckLeft, neckTop + 30);
+            ctx.quadraticCurveTo(neckLeft, neckTop, neckLeft + 20, neckTop);
+            ctx.lineTo(neckRight - 20, neckTop);
+            ctx.quadraticCurveTo(neckRight, neckTop, neckRight, neckTop + 30);
+            ctx.lineTo(neckRight, bottleTop);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(200, 230, 210, 0.4)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(180, 200, 190, 0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 软木塞
+            ctx.fillStyle = '#c4956a';
+            ctx.beginPath();
+            drawRoundRect(ctx, neckLeft + 5, neckTop - 18, neckRight - neckLeft - 10, 22, 4);
+            ctx.fill();
+
+            // 瓶身
+            ctx.beginPath();
+            ctx.moveTo(bottleLeft, bottleBottom);
+            ctx.lineTo(bottleLeft, bottleTop + 40);
+            ctx.quadraticCurveTo(bottleLeft, bottleTop, bottleLeft + 30, bottleTop);
+            ctx.lineTo(neckLeft, bottleTop);
+            ctx.lineTo(neckRight, bottleTop);
+            ctx.lineTo(bottleRight - 30, bottleTop);
+            ctx.quadraticCurveTo(bottleRight, bottleTop, bottleRight, bottleTop + 40);
+            ctx.lineTo(bottleRight, bottleBottom);
+            ctx.closePath();
+
+            // 玻璃效果
+            const glassGrad = ctx.createLinearGradient(bottleLeft, 0, bottleRight, 0);
+            glassGrad.addColorStop(0, 'rgba(200, 235, 215, 0.35)');
+            glassGrad.addColorStop(0.3, 'rgba(220, 245, 230, 0.2)');
+            glassGrad.addColorStop(0.7, 'rgba(220, 245, 230, 0.2)');
+            glassGrad.addColorStop(1, 'rgba(180, 210, 195, 0.35)');
+            ctx.fillStyle = glassGrad;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(180, 200, 190, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 标签区域：用户照片作为背景
+            const labelLeft = bottleLeft + 20;
+            const labelRight = bottleRight - 20;
+            const labelTop = bottleTop + 120;
+            const labelBottom = bottleBottom - 80;
+            const labelW = labelRight - labelLeft;
+            const labelH = labelBottom - labelTop;
+
+            ctx.save();
+            ctx.beginPath();
+            drawRoundRect(ctx, labelLeft, labelTop, labelW, labelH, 6);
+            ctx.clip();
+
+            // 绘制用户照片（覆盖整个标签区域）
+            const imgRatio = img.width / img.height;
+            const labelRatio = labelW / labelH;
+            let sx = 0, sy = 0, sw = img.width, sh = img.height;
+            if (imgRatio > labelRatio) {
+                sw = img.height * labelRatio;
+                sx = (img.width - sw) / 2;
+            } else {
+                sh = img.width / labelRatio;
+                sy = (img.height - sh) / 2;
+            }
+            ctx.drawImage(img, sx, sy, sw, sh, labelLeft, labelTop, labelW, labelH);
+
+            // 半透明底条 - 顶部品牌
+            const barH = 36;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.fillRect(labelLeft, labelTop, labelW, barH);
+
+            // 品牌名
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 22px "PingFang SC", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Life In.', labelLeft + labelW / 2, labelTop + barH / 2);
+
+            // 半透明底条 - 底部产品信息
+            const bottomBarH = 52;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.fillRect(labelLeft, labelBottom - bottomBarH, labelW, bottomBarH);
+
+            // 产品名
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px "PingFang SC", sans-serif';
+            ctx.fillText(cocktail.name_cn, labelLeft + labelW / 2, labelBottom - bottomBarH + 22);
+
+            // 规格
+            ctx.font = '13px "PingFang SC", sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillText('275ml | 16% vol', labelLeft + labelW / 2, labelBottom - bottomBarH + 42);
+
+            ctx.restore();
+
+            // 玻璃高光
+            ctx.beginPath();
+            ctx.moveTo(bottleLeft + 15, bottleTop + 60);
+            ctx.lineTo(bottleLeft + 15, bottleBottom - 20);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = imageBase64;
+    });
+}
+
+// ========== 事件绑定 ==========
+const userInput = document.getElementById('userInput');
+const btnSearch = document.getElementById('btnSearch');
+const charCount = document.getElementById('charCount');
+const loading = document.getElementById('loadingOverlay');
+const pageHome = document.getElementById('pageHome');
+const pageResults = document.getElementById('pageResults');
+
+userInput.addEventListener('input', () => {
+    const len = userInput.value.trim().length;
+    charCount.textContent = `${userInput.value.length}/200`;
+    btnSearch.disabled = len < 2;
+});
+
+// 快捷标签
+document.querySelectorAll('.tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+        userInput.value = tag.dataset.text;
+        charCount.textContent = `${userInput.value.length}/200`;
+        btnSearch.disabled = false;
+        userInput.focus();
+    });
+});
+
+// 搜索
+btnSearch.addEventListener('click', doSearch);
+userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!btnSearch.disabled) doSearch();
+    }
+});
+
+function doSearch() {
+    const text = userInput.value.trim();
+    const hasImage = !!uploadedImageBase64;
+    if (!text && !hasImage) return;
+
+    loading.classList.add('active');
+
+    // 如果有图片，先做本地主色调提取辅助匹配
+    let imageColorHint = null;
+    if (hasImage) {
+        imageColorHint = extractDominantColor(uploadedImageBase64);
+    }
+
+    // 模拟 AI 处理延迟
+    setTimeout(() => {
+        // 优先：名称直接匹配
+        let results = text ? matchByName(text, COCKTAIL_DB) : [];
+        let profile = null;
+        let isNameMatch = false;
+
+        if (results.length > 0) {
+            // 命中名称，直接用匹配结果，同时解析 profile 供评语使用
+            isNameMatch = true;
+            profile = parseUserInput(text);
+        } else {
+            // 未命中名称，走风味维度匹配
+            profile = parseUserInput(text);
+            
+            // 如果有图片色提取结果，补充到 profile
+            if (imageColorHint && profile.color.length === 0) {
+                profile.color = imageColorHint;
+            }
+
+            results = matchCocktails(profile, COCKTAIL_DB);
+        }
+
+        const aiComment = generateAIComment(profile, results, hasImage, isNameMatch);
+
+        pageHome.style.display = 'none';
+        pageResults.classList.add('active');
+        
+        let headerText = '';
+        if (isNameMatch) {
+            headerText = `「${results[0].name_cn}」`;
+        } else if (text && hasImage) {
+            headerText = `为「${text.slice(0, 12)}${text.length > 12 ? '...' : ''}」+ 📷图片 推荐`;
+        } else if (hasImage) {
+            headerText = '为📷图片推荐';
+        } else {
+            headerText = `为「${text.slice(0, 15)}${text.length > 15 ? '...' : ''}」推荐`;
+        }
+        document.getElementById('resultsHeaderText').textContent = headerText;
+
+        renderResults(results, aiComment);
+        loading.classList.remove('active');
+    }, 800);
+}
+
+// ========== 图片主色调提取（本地简易版） ==========
+function extractDominantColor(imageSrc) {
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.src = imageSrc;
+        
+        canvas.width = 50;
+        canvas.height = 50;
+        ctx.drawImage(img, 0, 0, 50, 50);
+        
+        const data = ctx.getImageData(0, 0, 50, 50).data;
+        let rSum = 0, gSum = 0, bSum = 0, count = 0;
+        
+        for (let i = 0; i < data.length; i += 4) {
+            rSum += data[i];
+            gSum += data[i + 1];
+            bSum += data[i + 2];
+            count++;
+        }
+        
+        const rAvg = rSum / count;
+        const gAvg = gSum / count;
+        const bAvg = bSum / count;
+        
+        // 简单颜色映射
+        const colors = [];
+        if (rAvg > 150 && gAvg < 120) colors.push('red');
+        if (rAvg > 180 && gAvg > 120 && bAvg < 100) colors.push('orange');
+        if (rAvg > 150 && gAvg > 150 && bAvg < 100) colors.push('gold');
+        if (gAvg > 150 && rAvg < 100) colors.push('green');
+        if (bAvg > 150 && rAvg < 100) colors.push('blue');
+        if (rAvg > 150 && gAvg > 150 && bAvg > 150) colors.push('white');
+        if (colors.length === 0) colors.push('gold');
+        
+        return colors;
+    } catch (e) {
+        return ['gold'];
+    }
+}
+
+// ========== 语音输入 ==========
+let isRecording = false;
+let recognition = null;
+const btnVoice = document.getElementById('btnVoice');
+const voiceStatus = document.getElementById('voiceStatus');
+
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'zh-CN';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+        isRecording = true;
+        btnVoice.classList.add('recording');
+        voiceStatus.classList.add('active');
+    };
+
+    recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        // 追加到输入框，不覆盖已有文字
+        const current = userInput.value.trim();
+        userInput.value = current ? current + '，' + transcript : transcript;
+        charCount.textContent = `${userInput.value.length}/200`;
+        btnSearch.disabled = userInput.value.trim().length < 2;
+    };
+
+    recognition.onend = () => {
+        isRecording = false;
+        btnVoice.classList.remove('recording');
+        voiceStatus.classList.remove('active');
+    };
+
+    recognition.onerror = (event) => {
+        isRecording = false;
+        btnVoice.classList.remove('recording');
+        voiceStatus.classList.remove('active');
+        if (event.error === 'not-allowed') {
+            voiceStatus.textContent = '⚠️ 请允许麦克风权限';
+            voiceStatus.classList.add('active');
+            setTimeout(() => voiceStatus.classList.remove('active'), 3000);
+        }
+    };
+
+    btnVoice.addEventListener('click', () => {
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            voiceStatus.textContent = '正在聆听...';
+            recognition.start();
+        }
+    });
+} else {
+    btnVoice.style.opacity = '0.4';
+    btnVoice.style.cursor = 'not-allowed';
+    btnVoice.title = '当前浏览器不支持语音输入';
+}
+
+// ========== 图片上传 ==========
+const btnImage = document.getElementById('btnImage');
+const imageFileInput = document.getElementById('imageFileInput');
+const imagePreviewArea = document.getElementById('imagePreviewArea');
+const imagePreviewImg = document.getElementById('imagePreviewImg');
+const imageRemoveBtn = document.getElementById('imageRemoveBtn');
+let uploadedImageBase64 = null;
+
+btnImage.addEventListener('click', () => {
+    imageFileInput.click();
+});
+
+imageFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 检查文件大小（5MB 限制）
+    if (file.size > 5 * 1024 * 1024) {
+        alert('图片不能超过 5MB');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        uploadedImageBase64 = ev.target.result;
+        imagePreviewImg.src = uploadedImageBase64;
+        imagePreviewArea.classList.add('active');
+        // 有图片时也允许搜索
+        btnSearch.disabled = false;
+    };
+    reader.readAsDataURL(file);
+});
+
+imageRemoveBtn.addEventListener('click', () => {
+    uploadedImageBase64 = null;
+    imagePreviewImg.src = '';
+    imagePreviewArea.classList.remove('active');
+    imageFileInput.value = '';
+    // 重新检查文字输入
+    btnSearch.disabled = userInput.value.trim().length < 2;
+});
+
+// ========== 返回 ==========
+document.getElementById('btnBack').addEventListener('click', () => {
+    pageResults.classList.remove('active');
+    pageHome.style.display = 'flex';
+});
+
+// ========== AI 聊天功能 ==========
+let chatHistory = [];
+let lastSearchProfile = null;
+let lastSearchText = '';
+let cozeConversationId = null;  // Coze Bot 会话ID，保持上下文
+let chatApiAvailable = null;    // null=未检测, true=可用, false=不可用
+let chatSending = false;        // 防止重复发送
+
+const chatOverlay = document.getElementById('chatOverlay');
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const chatSend = document.getElementById('chatSend');
+const chatClose = document.getElementById('chatClose');
+const btnChatMore = document.getElementById('btnChatMore');
+
+// AI提问策略：本地fallback（Coze API不可用时使用）
+function generateAIQuestion(profile, history) {
+    const gaps = [];
+    if (Object.values(profile.taste).every(v => v === 0)) gaps.push('taste');
+    if (profile.strength.length === 0) gaps.push('strength');
+    if (profile.aroma.length === 0) gaps.push('aroma');
+    if (profile.temperature.length === 0) gaps.push('temperature');
+    if (profile.occasion.length === 0) gaps.push('occasion');
+
+    const questionMap = {
+        taste: ['你更偏好哪种口感？偏甜一点、酸一点，还是能接受苦味？', '你喜欢清爽型的还是浓郁型的？', '你想要偏酸甜的水果味，还是偏草本/香料的风味？'],
+        strength: ['酒精度你有什么要求？想要轻一点的微醺感，还是浓烈一点的？', '你平时喝酒多吗？想要低度好入口的，还是烈一些有深度的？'],
+        aroma: ['你喜欢什么香味？果香、花香、咖啡香还是草本香？', '有没有特别喜欢的风味？比如椰子、薄荷、巧克力？'],
+        temperature: ['想喝冰的还是热的？', '加冰的长饮还是短饮？'],
+        occasion: ['你是在什么场合喝？一个人放松、朋友聚会还是约会？', '是餐前开胃、餐后甜点，还是纯粹想喝一杯？'],
+    };
+
+    const priority = ['taste', 'strength', 'aroma', 'temperature', 'occasion'];
+    for (const p of priority) {
+        if (gaps.includes(p)) {
+            const qs = questionMap[p];
+            return qs[Math.floor(Math.random() * qs.length)];
+        }
+    }
+    return '我再帮你想想——你有没有什么绝对不想碰的味道？比如太苦的、太甜的？';
+}
+
+function addChatMsg(text, type, resultCards) {
+    const div = document.createElement('div');
+    div.className = `chat-msg ${type}`;
+    let html = text;
+    if (resultCards && resultCards.length > 0) {
+        resultCards.forEach(c => {
+            html += `<div class="chat-result-card" data-name="${c.name_cn}">
+                <div class="crc-name">${c.name_cn} · ${c.name_en}</div>
+                <div class="crc-desc">${c.description}</div>
+            </div>`;
+        });
+    }
+    div.innerHTML = html;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    div.querySelectorAll('.chat-result-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const name = card.dataset.name;
+            const c = COCKTAIL_DB.find(x => x.name_cn === name);
+            if (c) {
+                chatOverlay.classList.remove('active');
+                showDetail(c);
+            }
+        });
+    });
+}
+
+function addTypingIndicator() {
+    const div = document.createElement('div');
+    div.className = 'chat-msg ai';
+    div.id = 'chatTyping';
+    div.innerHTML = '<span style="opacity:0.6">AI正在思考...</span>';
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeTypingIndicator() {
+    const el = document.getElementById('chatTyping');
+    if (el) el.remove();
+}
+
+function setChatInputEnabled(enabled) {
+    chatInput.disabled = !enabled;
+    chatSend.disabled = !enabled;
+    chatSending = !enabled;
+}
+
+// 构建发送给Coze Bot的完整消息（含上下文）
+function buildCozeMessage(text) {
+    // 把用户初始搜索+聊天历史组合成完整上下文
+    const contextMsg = `[用户初始需求: ${lastSearchText}]\n[用户当前回答: ${text}]`;
+    return contextMsg;
+}
+
+function openChat() {
+    chatHistory = [];
+    cozeConversationId = null;  // 重置会话
+    chatMessages.innerHTML = '';
+    chatOverlay.classList.add('active');
+
+    lastSearchText = document.getElementById('userInput').value.trim();
+    lastSearchProfile = parseUserInput(lastSearchText);
+
+    // 开场白
+    const greetings = [
+        `我知道你刚才说了「${lastSearchText.slice(0, 20)}」，让我再了解一下你的口味——`,
+        `刚才的推荐没打动你？没关系，再聊聊——`,
+        `想找更合适的？跟我说说更具体的感觉——`,
+    ];
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+
+    // 先尝试Coze API生成开场问题
+    if (chatApiAvailable !== false) {
+        addChatMsg(greeting, 'ai');
+        addTypingIndicator();
+
+        const API_BASE = window.location.protocol === 'file:'
+            ? 'http://localhost:3000'
+            : window.location.origin;
+
+        fetch(`${API_BASE}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: `用户在鸡尾酒推荐系统中搜索了「${lastSearchText}」，但觉得推荐不够合适，现在想进一步沟通。请用一句话打招呼并提一个针对性的问题来了解TA的口味偏好。`,
+                user_id: 'web_user'
+            })
+        }).then(r => r.json()).then(data => {
+            removeTypingIndicator();
+            if (data.reply) {
+                chatApiAvailable = true;
+                if (data.conversation_id) cozeConversationId = data.conversation_id;
+                addChatMsg(data.reply, 'ai');
+            } else {
+                chatApiAvailable = false;
+                const question = generateAIQuestion(lastSearchProfile, chatHistory);
+                addChatMsg(question, 'ai');
+            }
+        }).catch(() => {
+            removeTypingIndicator();
+            chatApiAvailable = false;
+            const question = generateAIQuestion(lastSearchProfile, chatHistory);
+            addChatMsg(question, 'ai');
+        });
+    } else {
+        addChatMsg(greeting, 'ai');
+        const question = generateAIQuestion(lastSearchProfile, chatHistory);
+        setTimeout(() => addChatMsg(question, 'ai'), 300);
+    }
+
+    chatInput.focus();
+}
+
+async function handleChatSend() {
+    const text = chatInput.value.trim();
+    if (!text || chatSending) return;
+
+    chatInput.value = '';
+    addChatMsg(text, 'user');
+    chatHistory.push(text);
+
+    // 先做本地匹配更新（无论API是否可用，主页面结果都需要更新）
+    const combinedText = [lastSearchText, ...chatHistory].join('，');
+    const newProfile = parseUserInput(combinedText);
+    const results = matchCocktails(newProfile, COCKTAIL_DB);
+
+    // 更新主页面推荐
+    if (results.length > 0) {
+        const aiComment = generateAIComment(newProfile, results, false, false);
+        renderResults(results, aiComment);
+        document.getElementById('resultsHeaderText').textContent = `为「${combinedText.slice(0, 12)}${combinedText.length > 12 ? '...' : ''}」推荐`;
+    }
+
+    // 尝试Coze Bot API
+    if (chatApiAvailable !== false) {
+        setChatInputEnabled(false);
+        addTypingIndicator();
+
+        try {
+            const API_BASE = window.location.protocol === 'file:'
+                ? 'http://localhost:3000'
+                : window.location.origin;
+
+            const resp = await fetch(`${API_BASE}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: buildCozeMessage(text),
+                    conversation_id: cozeConversationId,
+                    user_id: 'web_user'
+                })
+            });
+
+            const data = await resp.json();
+            removeTypingIndicator();
+
+            if (resp.ok && data.reply) {
+                chatApiAvailable = true;
+                if (data.conversation_id) cozeConversationId = data.conversation_id;
+
+                // AI回复 + 匹配结果卡片
+                if (results.length > 0) {
+                    addChatMsg(data.reply, 'ai', results.slice(0, 3));
+                } else {
+                    addChatMsg(data.reply, 'ai');
+                }
+                setChatInputEnabled(true);
+                return;
+            } else {
+                chatApiAvailable = false;
+            }
+        } catch (err) {
+            removeTypingIndicator();
+            chatApiAvailable = false;
+        }
+        setChatInputEnabled(true);
+    }
+
+    // 本地fallback
+    if (results.length > 0) {
+        const top3 = results.slice(0, 3);
+        let response = '根据你的描述，这几款可能会更合你意：';
+        if (top3.length === 1) {
+            response = `我觉得这款很适合你——${top3[0].name_cn}：`;
+        }
+        addChatMsg(response, 'ai', top3);
+    } else {
+        const question = generateAIQuestion(newProfile, chatHistory);
+        addChatMsg(question, 'ai');
+    }
+}
+
+btnChatMore.addEventListener('click', openChat);
+chatClose.addEventListener('click', () => chatOverlay.classList.remove('active'));
+chatSend.addEventListener('click', handleChatSend);
+chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !chatSending) handleChatSend();
+});
+
+// ========== 数据库（内嵌103款） ==========
+const COCKTAIL_DB = [{"name_cn":"马天尼","name_en":"Dry Martini","base_spirit":["gin"],"family":"martini","taste":{"sweet":0,"sour":0,"bitter":2,"salty":0,"umami":0},"aroma":["herbal","citrus"],"color":["clear"],"mouthfeel":["crisp","sharp"],"strength":"very-strong","temperature":"short-cold","occasion":["aperitif","solo","date"],"ingredients":["60ml 金酒","10ml 干味美思","柠檬皮或橄榄"],"garnish":"柠檬皮或橄榄","glass":"马天尼杯","method":"stir","description":"极简主义的极致表达，金酒的草本与味美思的微妙完美融合"},{"name_cn":"尼格罗尼","name_en":"Negroni","base_spirit":["gin"],"family":"martini","taste":{"sweet":2,"sour":0,"bitter":4,"salty":0,"umami":1},"aroma":["citrus","herbal"],"color":["red"],"mouthfeel":["sharp","smooth"],"strength":"strong","temperature":"short-cold","occasion":["aperitif","solo"],"ingredients":["30ml 金酒","30ml 金巴利","30ml 甜味美思"],"garnish":"橙皮","glass":"洛克杯","method":"stir","description":"苦甜交织的经典开胃酒，金酒的草本与金巴利的苦味完美平衡"},{"name_cn":"古典鸡尾酒","name_en":"Old Fashioned","base_spirit":["whiskey"],"family":"old-fashioned","taste":{"sweet":2,"sour":0,"bitter":2,"salty":0,"umami":0},"aroma":["spicy","citrus"],"color":["brown"],"mouthfeel":["smooth","astringent"],"strength":"strong","temperature":"short-cold","occasion":["solo","date","winter"],"ingredients":["45ml 波本威士忌","10ml 糖浆","2 dashes 安高天娜苦精","橙皮"],"garnish":"橙皮和樱桃","glass":"古典杯","method":"stir","description":"鸡尾酒之王，以最简单的方式展现威士忌的复杂风味"},{"name_cn":"曼哈顿","name_en":"Manhattan","base_spirit":["whiskey"],"family":"martini","taste":{"sweet":3,"sour":0,"bitter":2,"salty":0,"umami":0},"aroma":["herbal","fruity"],"color":["red"],"mouthfeel":["smooth","creamy"],"strength":"strong","temperature":"short-cold","occasion":["aperitif","solo","date"],"ingredients":["45ml 波本威士忌","30ml 甜味美思","2 dashes 安高天娜苦精"],"garnish":"樱桃","glass":"马天尼杯","method":"stir","description":"优雅的经典鸡尾酒，甜蜜与苦涩的完美平衡"},{"name_cn":"得其利","name_en":"Daiquiri","base_spirit":["rum"],"family":"sour","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["clear"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"short-cold","occasion":["summer","party","solo"],"ingredients":["60ml 白朗姆酒","30ml 青柠汁","15ml 糖浆"],"garnish":"青柠片","glass":" coupes杯","method":"shake","description":"酸甜平衡的经典朗姆酒，是所有酸酒风格的鼻祖"},{"name_cn":"莫吉托","name_en":"Mojito","base_spirit":["rum"],"family":"highball","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["herbal","citrus"],"color":["clear"],"mouthfeel":["crisp","smooth"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party","aperitif"],"ingredients":["45ml 白朗姆酒","30ml 青柠汁","6片薄荷叶","15ml 糖浆","苏打水"],"garnish":"薄荷枝和青柠片","glass":"高球杯","method":"muddle","description":"清爽怡人的古巴经典，草本与柑橘的完美融合"},{"name_cn":"马颈","name_en":"Horse's Neck","base_spirit":["brandy"],"family":"highball","taste":{"sweet":1,"sour":1,"bitter":1,"salty":0,"umami":0},"aroma":["citrus","spicy"],"color":["gold"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"long-on-ice","occasion":["aperitif","summer"],"ingredients":["45ml 白兰地","150ml 姜汁啤酒","2 dashes 安高天娜苦精"],"garnish":"长条柠檬皮","glass":"高球杯","method":"build","description":"视觉惊艳的长饮，柠檬皮的螺旋是最大亮点"},{"name_cn":"新加坡司令","name_en":"Singapore Sling","base_spirit":["gin"],"family":"punch","taste":{"sweet":3,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["fruity","citrus"],"color":["red","orange"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"long-on-ice","occasion":["party","summer","aperitif"],"ingredients":["30ml 金酒","15ml 樱桃白兰地","15ml 本尼迪克丁","15ml 君度","30ml 菠萝汁","15ml 青柠汁","10ml  grenadine"],"garnish":"菠萝片和樱桃","glass":"飓风杯","method":"shake","description":"新加坡莱佛士酒店的经典招牌酒，酸甜果香四溢"},{"name_cn":"黑俄罗斯","name_en":"Black Russian","base_spirit":["vodka"],"family":"old-fashioned","taste":{"sweet":2,"sour":0,"bitter":1,"salty":0,"umami":0},"aroma":["coffee","sweet"],"color":["brown"],"mouthfeel":["smooth","creamy"],"strength":"strong","temperature":"short-cold","occasion":["solo","after-dinner"],"ingredients":["45ml 伏特加","30ml 咖啡利口酒"],"garnish":"无","glass":"古典杯","method":"stir","description":"简单却迷人的组合，咖啡与酒精的完美邂逅"},{"name_cn":"血腥玛丽","name_en":"Bloody Mary","base_spirit":["vodka"],"family":"long-drink","taste":{"sweet":1,"sour":2,"bitter":1,"salty":3,"umami":2},"aroma":["spicy","herbal"],"color":["red"],"mouthfeel":["crisp","sharp"],"strength":"medium","temperature":"crushed-ice","occasion":["brunch","party"],"ingredients":["45ml 伏特加","90ml 番茄汁","15ml 柠檬汁","盐","胡椒","辣酱","worcestershire酱"],"garnish":"芹菜棒和柠檬片","glass":"高球杯","method":"build","description":"早餐鸡尾酒之王，咸鲜辛辣的复杂风味"},{"name_cn":"螺丝刀","name_en":"Screwdriver","base_spirit":["vodka"],"family":"highball","taste":{"sweet":2,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["orange"],"mouthfeel":["crisp","smooth"],"strength":"light","temperature":"long-on-ice","occasion":["summer","brunch","party"],"ingredients":["45ml 伏特加","90ml 橙汁"],"garnish":"橙片","glass":"高球杯","method":"build","description":"简单直接的橙汁伏特加，清爽易饮"},{"name_cn":"莫斯科骡子","name_en":"Moscow Mule","base_spirit":["vodka"],"family":"highball","taste":{"sweet":1,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","spicy"],"color":["clear"],"mouthfeel":["crisp","sharp"],"strength":"light","temperature":"crushed-ice","occasion":["summer","party"],"ingredients":["45ml 伏特加","120ml 姜汁啤酒","15ml 青柠汁"],"garnish":"青柠片和姜片","glass":"铜杯","method":"build","description":"清爽解渴的经典，姜的辣味与青柠完美平衡"},{"name_cn":"玛格丽特","name_en":"Margarita","base_spirit":["tequila"],"family":"sour","taste":{"sweet":1,"sour":4,"bitter":0,"salty":2,"umami":0},"aroma":["citrus","herbal"],"color":["clear"],"mouthfeel":["crisp","sharp"],"strength":"medium","temperature":"short-cold","occasion":["party","summer","date"],"ingredients":["45ml 龙舌兰酒","20ml 君度","20ml 青柠汁"],"garnish":"盐边和青柠片","glass":"玛格丽特杯","method":"shake","description":"全球最受欢迎的鸡尾酒之一，酸甜咸的完美平衡"},{"name_cn":"龙舌兰日出","name_en":"Tequila Sunrise","base_spirit":["tequila"],"family":"highball","taste":{"sweet":3,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["orange","red"],"mouthfeel":["smooth","crisp"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party","brunch"],"ingredients":["45ml 龙舌兰酒","90ml 橙汁","15ml 石榴糖浆"],"garnish":"橙片和樱桃","glass":"高球杯","method":"build","description":"渐变色如日出般美丽，果香浓郁的清爽饮品"},{"name_cn":"帕洛玛","name_en":"Paloma","base_spirit":["tequila"],"family":"highball","taste":{"sweet":1,"sour":2,"bitter":1,"salty":1,"umami":0},"aroma":["citrus","grapefruit"],"color":["pink"],"mouthfeel":["crisp","smooth"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party","aperitif"],"ingredients":["45ml 龙舌兰酒","120ml 葡萄柚苏打水","15ml 青柠汁","盐"],"garnish":"青柠片","glass":"高球杯","method":"build","description":"墨西哥国民饮料，葡萄柚的苦甜与龙舌兰的完美搭配"},{"name_cn":"边车","name_en":"Sidecar","base_spirit":["brandy"],"family":"sour","taste":{"sweet":2,"sour":3,"bitter":0,"salty":1,"umami":0},"aroma":["citrus","fruity"],"color":["gold"],"mouthfeel":["smooth","crisp"],"strength":"strong","temperature":"short-cold","occasion":["aperitif","solo","date"],"ingredients":["50ml 干邑白兰地","20ml 君度","20ml 柠檬汁"],"garnish":"柠檬皮和糖边","glass":"coupe杯","method":"shake","description":"优雅的巴黎经典，柑橘与白兰地的完美融合"},{"name_cn":"白俄罗斯","name_en":"White Russian","base_spirit":["vodka"],"family":"old-fashioned","taste":{"sweet":3,"sour":0,"bitter":0,"salty":0,"umami":0},"aroma":["coffee","sweet"],"color":["white"],"mouthfeel":["creamy","smooth"],"strength":"medium","temperature":"short-cold","occasion":["after-dinner","solo"],"ingredients":["45ml 伏特加","30ml 咖啡利口酒","30ml 鲜奶油"],"garnish":"可可粉","glass":"古典杯","method":"build","description":"《谋杀绿脚趾》使其闻名，丝滑甜蜜的咖啡风味"},{"name_cn":"代基里","name_en":"Daiquiri","base_spirit":["rum"],"family":"sour","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["clear"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"short-cold","occasion":["summer","party","solo"],"ingredients":["60ml 白朗姆酒","30ml 青柠汁","15ml 糖浆"],"garnish":"青柠片","glass":"coupe杯","method":"shake","description":"古巴经典鸡尾酒，酸甜平衡的完美典范"},{"name_cn":"皮斯科酸","name_en":"Pisco Sour","base_spirit":["pisco"],"family":"sour","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["gold","white"],"mouthfeel":["creamy","crisp"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","party","summer"],"ingredients":["60ml 皮斯科酒","30ml 青柠汁","20ml 糖浆","1个蛋清"],"garnish":"安高天娜苦精","glass":"coupe杯","method":"shake","description":"秘鲁国酒，绵密泡沫与酸甜的完美结合"},{"name_cn":"威士忌酸","name_en":"Whiskey Sour","base_spirit":["whiskey"],"family":"sour","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","spicy"],"color":["gold"],"mouthfeel":["smooth","creamy"],"strength":"medium","temperature":"short-cold","occasion":["solo","date","winter"],"ingredients":["45ml 波本威士忌","25ml 柠檬汁","15ml 糖浆","1个蛋清"],"garnish":"樱桃和橙片","glass":"古典杯","method":"shake","description":"经典的酸酒风格，威士忌与柑橘的完美平衡"},{"name_cn":"薄荷茱莉普","name_en":"Mint Julep","base_spirit":["whiskey"],"family":"highball","taste":{"sweet":3,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["herbal","mint"],"color":["clear"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"crushed-ice","occasion":["summer","party","aperitif"],"ingredients":["60ml 波本威士忌","6片薄荷叶","15ml 糖浆","苏打水"],"garnish":"薄荷枝","glass":"银杯或古典杯","method":"muddle","description":"肯塔基赛马会的象征，清新薄荷与波本的完美结合"},{"name_cn":"爱尔兰咖啡","name_en":"Irish Coffee","base_spirit":["whiskey"],"family":"hot","taste":{"sweet":3,"sour":0,"bitter":2,"salty":0,"umami":0},"aroma":["coffee","sweet"],"color":["brown"],"mouthfeel":["creamy","smooth"],"strength":"medium","temperature":"hot","occasion":["winter","after-dinner","brunch"],"ingredients":["45ml 爱尔兰威士忌","120ml 热咖啡","15ml 红糖","鲜奶油"],"garnish":"无","glass":"爱尔兰咖啡杯","method":"build","description":"温暖身心的经典热饮，咖啡与威士忌的完美融合"},{"name_cn":"萨泽拉克","name_en":"Sazerac","base_spirit":["whiskey"],"family":"old-fashioned","taste":{"sweet":1,"sour":0,"bitter":3,"salty":0,"umami":1},"aroma":["anise","spicy"],"color":["brown"],"mouthfeel":["sharp","smooth"],"strength":"strong","temperature":"short-cold","occasion":["solo","after-dinner"],"ingredients":["50ml 黑麦威士忌","10ml 苦艾酒","1块糖","2 dashes Peychaud苦精"],"garnish":"柠檬皮","glass":"古典杯","method":"stir","description":"新奥尔良的灵魂鸡尾酒，被认为是美国最古老的鸡尾酒"},{"name_cn":"法国75","name_en":"French 75","base_spirit":["gin"],"family":"sparkling","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","floral"],"color":["gold"],"mouthfeel":["crisp","bubbly"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","party","celebration"],"ingredients":["30ml 金酒","15ml 柠檬汁","15ml 糖浆","香槟"],"garnish":"柠檬皮","glass":"香槟杯","method":"shake","description":"优雅的法国经典，如香槟般闪耀的鸡尾酒"},{"name_cn":"飞行","name_en":"Aviation","base_spirit":["gin"],"family":"martini","taste":{"sweet":1,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["floral","citrus"],"color":["blue","clear"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","solo","date"],"ingredients":["45ml 金酒","15ml 樱桃白兰地利口酒","10ml 紫罗兰利口酒","20ml 柠檬汁"],"garnish":"樱桃","glass":"coupe杯","method":"shake","description":"梦幻般的天蓝色鸡尾酒，花香与柑橘的完美融合"},{"name_cn":"琴费士","name_en":"Gin Fizz","base_spirit":["gin"],"family":"highball","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","herbal"],"color":["clear"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party","aperitif"],"ingredients":["45ml 金酒","25ml 柠檬汁","15ml 糖浆","苏打水"],"garnish":"柠檬片","glass":"高球杯","method":"shake","description":"清爽解渴的经典嗨棒，柠檬与金酒的完美搭配"},{"name_cn":"汤姆柯林斯","name_en":"Tom Collins","base_spirit":["gin"],"family":"highball","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","herbal"],"color":["clear"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party"],"ingredients":["45ml 金酒","25ml 柠檬汁","15ml 糖浆","苏打水"],"garnish":"柠檬片和樱桃","glass":"柯林斯杯","method":"shake","description":"经典的英式嗨棒，清爽怡人的夏日饮品"},{"name_cn":"新加坡司令","name_en":"Singapore Sling","base_spirit":["gin"],"family":"punch","taste":{"sweet":3,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["fruity","citrus"],"color":["pink"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"long-on-ice","occasion":["party","summer","aperitif"],"ingredients":["30ml 金酒","15ml 樱桃利口酒","15ml 本尼迪克丁","7ml 君度","30ml 菠萝汁","15ml 青柠汁","10ml 石榴糖浆"],"garnish":"菠萝片和樱桃","glass":"飓风杯","method":"shake","description":"新加坡莱佛士酒店经典，果香浓郁的热带风情"},{"name_cn":"僵尸","name_en":"Zombie","base_spirit":["rum"],"family":"tiki","taste":{"sweet":3,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["fruity","spicy","citrus"],"color":["orange","red"],"mouthfeel":["crisp","fruity"],"strength":"very-strong","temperature":"crushed-ice","occasion":["party","tiki"],"ingredients":["45ml 金朗姆酒","45ml 深色朗姆酒","30ml 百加得151","20ml 青柠汁","15ml falernum","15ml 石榴糖浆","60ml 菠萝汁"],"garnish":"薄荷枝和菠萝片","glass":"飓风杯","method":"shake","description":"Tiki经典中的经典，多种朗姆酒的强劲组合"},{"name_cn":"迈泰","name_en":"Mai Tai","base_spirit":["rum"],"family":"tiki","taste":{"sweet":3,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","nutty","fruity"],"color":["gold","orange"],"mouthfeel":["crisp","fruity"],"strength":"medium","temperature":"crushed-ice","occasion":["party","summer","tiki"],"ingredients":["30ml 白朗姆酒","30ml 深色牙买加朗姆酒","15ml 橙皮利口酒","15ml orgeat糖浆","20ml 青柠汁"],"garnish":"薄荷枝和青柠片","glass":"岩石杯","method":"shake","description":"Tiki鸡尾酒的代表，杏仁与柑橘的完美平衡"},{"name_cn":"椰林飘香","name_en":"Piña Colada","base_spirit":["rum"],"family":"blended","taste":{"sweet":4,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["fruity","coconut"],"color":["white"],"mouthfeel":["creamy","smooth"],"strength":"light","temperature":"frozen","occasion":["party","summer","vacation"],"ingredients":["45ml 白朗姆酒","60ml 菠萝汁","30ml 椰奶","30ml 椰子奶油"],"garnish":"菠萝片和樱桃","glass":"飓风杯","method":"blend","description":"热带风情十足，椰香与菠萝的完美融合"},{"name_cn":"自由古巴","name_en":"Cuba Libre","base_spirit":["rum"],"family":"highball","taste":{"sweet":2,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["citrus","cola"],"color":["brown"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["party","summer"],"ingredients":["45ml 白朗姆酒","120ml 可乐","15ml 青柠汁"],"garnish":"青柠片","glass":"高球杯","method":"build","description":"古巴经典的朗姆可乐，简单却令人愉悦"},{"name_cn":"深水炸弹","name_en":"Dark 'n' Stormy","base_spirit":["rum"],"family":"highball","taste":{"sweet":1,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["spicy","ginger"],"color":["brown"],"mouthfeel":["crisp","sharp"],"strength":"medium","temperature":"long-on-ice","occasion":["summer","party"],"ingredients":["45ml 深色朗姆酒","120ml 姜汁啤酒"],"garnish":"青柠片","glass":"高球杯","method":"build","description":"牙买加经典，深色朗姆与姜汁啤酒的完美碰撞"},{"name_cn":"大都会","name_en":"Cosmopolitan","base_spirit":["vodka"],"family":"martini","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["pink"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"short-cold","occasion":["party","date","aperitif"],"ingredients":["40ml 柑橘伏特加","15ml 君度","15ml 青柠汁","30ml 蔓越莓汁"],"garnish":"橙皮","glass":"coupe杯","method":"shake","description":"粉红色的时尚经典，欲望都市的标志性饮品"},{"name_cn":"性感沙滩","name_en":"Sex on the Beach","base_spirit":["vodka"],"family":"punch","taste":{"sweet":4,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["fruity","citrus"],"color":["orange","pink"],"mouthfeel":["crisp","fruity"],"strength":"light","temperature":"long-on-ice","occasion":["party","summer","vacation"],"ingredients":["40ml 伏特加","20ml 蜜桃利口酒","40ml 橙汁","40ml 蔓越莓汁"],"garnish":"橙片和樱桃","glass":"高球杯","method":"build","description":"名字大胆热情，果香浓郁的派对饮品"},{"name_cn":"海风","name_en":"Sea Breeze","base_spirit":["vodka"],"family":"highball","taste":{"sweet":1,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["red","pink"],"mouthfeel":["crisp","refreshing"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party","beach"],"ingredients":["40ml 伏特加","80ml 蔓越莓汁","80ml 西柚汁"],"garnish":"柠檬片","glass":"高球杯","method":"build","description":"如海风般清爽的夏日饮品"},{"name_cn":"长岛冰茶","name_en":"Long Island Iced Tea","base_spirit":["vodka","gin","rum","tequila"],"family":"long-drink","taste":{"sweet":2,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["citrus","herbal"],"color":["gold","brown"],"mouthfeel":["crisp"],"strength":"very-strong","temperature":"long-on-ice","occasion":["party","summer"],"ingredients":["15ml 伏特加","15ml 金酒","15ml 白朗姆酒","15ml 龙舌兰酒","15ml 君度","20ml 柠檬汁","15ml 糖浆","可乐"],"garnish":"柠檬片","glass":"高球杯","method":"build","description":"看似无害却极其强劲，名字欺骗性十足的派对杀手"},{"name_cn":"咖啡马天尼","name_en":"Espresso Martini","base_spirit":["vodka"],"family":"martini","taste":{"sweet":2,"sour":0,"bitter":3,"salty":0,"umami":1},"aroma":["coffee","herbal"],"color":["brown","black"],"mouthfeel":["smooth","creamy"],"strength":"strong","temperature":"short-cold","occasion":["after-dinner","solo","party"],"ingredients":["45ml 伏特加","30ml 咖啡利口酒","30ml 新鲜 espresso","10ml 糖浆"],"garnish":"咖啡豆","glass":"coupe杯","method":"shake","description":"咖啡与酒精的完美结合，提神醒脑的夜间饮品"},{"name_cn":"柠檬马天尼","name_en":"Lemon Drop Martini","base_spirit":["vodka"],"family":"martini","taste":{"sweet":2,"sour":4,"bitter":0,"salty":1,"umami":0},"aroma":["citrus","sweet"],"color":["clear","yellow"],"mouthfeel":["crisp","sharp"],"strength":"medium","temperature":"short-cold","occasion":["party","date","aperitif"],"ingredients":["40ml 柠檬伏特加","20ml 君度","20ml 柠檬汁","糖边"],"garnish":"柠檬皮","glass":"马天尼杯","method":"shake","description":"酸甜可口的柠檬炸弹，糖边的甜蜜与柠檬的酸爽完美结合"},{"name_cn":"法国马天尼","name_en":"French Martini","base_spirit":["vodka"],"family":"martini","taste":{"sweet":3,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["fruity","berry"],"color":["pink"],"mouthfeel":["smooth","creamy"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","party","date"],"ingredients":["40ml 伏特加","20ml 覆盆子利口酒","20ml 菠萝汁"],"garnish":"树莓","glass":"coupe杯","method":"shake","description":"优雅浪漫的法式风情，果香浓郁"},{"name_cn":"美国佬","name_en":"Americano","base_spirit":["gin"],"family":"old-fashioned","taste":{"sweet":2,"sour":0,"bitter":3,"salty":0,"umami":1},"aroma":["herbal","citrus"],"color":["red"],"mouthfeel":["smooth","crisp"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","solo"],"ingredients":["30ml 金酒","30ml 金巴利","30ml 甜味美思","苏打水"],"garnish":"橙片和柠檬皮","glass":"古典杯","method":"stir","description":"意大利经典开胃酒，苦甜交织的完美平衡"},{"name_cn":"三叶草俱乐部","name_en":"Clover Club","base_spirit":["gin"],"family":"sour","taste":{"sweet":2,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["fruity","citrus","floral"],"color":["pink"],"mouthfeel":["creamy","smooth"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","party","date"],"ingredients":["45ml 金酒","20ml 覆盆子糖浆","15ml 柠檬汁","1个蛋清"],"garnish":"新鲜覆盆子","glass":"coupe杯","method":"shake","description":"优雅的粉红色鸡尾酒，花香与果香的完美融合"},{"name_cn":"白兰地亚历山大","name_en":"Brandy Alexander","base_spirit":["brandy"],"family":"dessert","taste":{"sweet":4,"sour":0,"bitter":0,"salty":0,"umami":0},"aroma":["chocolate","nutty","creamy"],"color":["brown"],"mouthfeel":["creamy","smooth"],"strength":"medium","temperature":"short-cold","occasion":["after-dinner","party"],"ingredients":["45ml 白兰地","30ml 巧克力利口酒","30ml 鲜奶油"],"garnish":"肉豆蔻粉","glass":"coupe杯","method":"shake","description":"丝滑甜蜜的餐后甜酒，巧克力与白兰地的完美结合"},{"name_cn":"法式_CONNECTION","name_en":"French Connection","base_spirit":["brandy"],"family":"old-fashioned","taste":{"sweet":3,"sour":0,"bitter":0,"salty":0,"umami":0},"aroma":["nutty","fruity"],"color":["brown"],"mouthfeel":["smooth"],"strength":"strong","temperature":"short-cold","occasion":["after-dinner","solo"],"ingredients":["35ml 干邑白兰地","35ml 杏仁利口酒"],"garnish":"无","glass":"古典杯","method":"stir","description":"极简的法式优雅，杏仁与干邑的完美融合"},{"name_cn":"绿蚱蜢","name_en":"Grasshopper","base_spirit":["creme-de-menthe"],"family":"dessert","taste":{"sweet":4,"sour":0,"bitter":0,"salty":0,"umami":0},"aroma":["mint","chocolate"],"color":["green"],"mouthfeel":["creamy","smooth"],"strength":"medium","temperature":"short-cold","occasion":["after-dinner","party"],"ingredients":["30ml 绿薄荷利口酒","30ml 白可可利口酒","30ml 鲜奶油"],"garnish":"薄荷叶","glass":"coupe杯","method":"shake","description":"清新的薄荷巧克力风味，如草地般翠绿"},{"name_cn":"比特","name_en":"B-52","base_spirit":["vodka","coffee-liqueur"],"family":"shot","taste":{"sweet":3,"sour":0,"bitter":1,"salty":0,"umami":0},"aroma":["coffee","chocolate","orange"],"color":["layered"],"mouthfeel":["creamy","smooth"],"strength":"strong","temperature":"short-cold","occasion":["party","shot"],"ingredients":["20ml 咖啡利口酒","20ml 百利甜酒","20ml 君度"],"garnish":"无","glass":"子弹杯","method":"build","description":"经典分层shot，三种风味的完美层叠"},{"name_cn":"教父","name_en":"Godfather","base_spirit":["whiskey"],"family":"old-fashioned","taste":{"sweet":2,"sour":0,"bitter":0,"salty":0,"umami":0},"aroma":["nutty","spicy"],"color":["brown"],"mouthfeel":["smooth"],"strength":"strong","temperature":"short-cold","occasion":["after-dinner","solo"],"ingredients":["45ml 苏格兰威士忌","25ml 杏仁利口酒"],"garnish":"无","glass":"古典杯","method":"stir","description":"如电影教父般沉稳大气，杏仁与威士忌的完美结合"},{"name_cn":"蓝色夏威夷","name_en":"Blue Hawaii","base_spirit":["rum","vodka"],"family":"tiki","taste":{"sweet":4,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["fruity","citrus","coconut"],"color":["blue"],"mouthfeel":["crisp","fruity"],"strength":"light","temperature":"long-on-ice","occasion":["party","summer","vacation"],"ingredients":["30ml 白朗姆酒","30ml 伏特加","30ml 蓝橙利口酒","90ml 菠萝汁","30ml 椰奶"],"garnish":"菠萝片和樱桃","glass":"飓风杯","method":"shake","description":"如热带海洋般湛蓝，清爽的夏日风情"},{"name_cn":"凯匹林纳","name_en":"Caipirinha","base_spirit":["cachaca"],"family":"sour","taste":{"sweet":1,"sour":4,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","herbal"],"color":["clear"],"mouthfeel":["crisp","sharp"],"strength":"medium","temperature":"crushed-ice","occasion":["summer","party","aperitif"],"ingredients":["60ml 巴西甘蔗酒","半个青柠","2勺糖"],"garnish":"青柠片","glass":"古典杯","method":"muddle","description":"巴西国酒，简单却令人惊艳的青柠与甘蔗酒组合"},{"name_cn":"阿佩罗橙味斯普茨","name_en":"Aperol Spritz","base_spirit":["wine"],"family":"spritz","taste":{"sweet":2,"sour":1,"bitter":2,"salty":0,"umami":0},"aroma":["citrus","herbal"],"color":["orange"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["aperitif","summer","party"],"ingredients":["60ml 阿佩罗","90ml 普罗塞克","30ml 苏打水"],"garnish":"橙片","glass":"葡萄酒杯","method":"build","description":"意大利国民开胃酒，清新轻盈的夏日风情"},{"name_cn":"含羞草","name_en":"Mimosa","base_spirit":["wine"],"family":"sparkling","taste":{"sweet":2,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["orange","gold"],"mouthfeel":["bubbly","crisp"],"strength":"light","temperature":"short-cold","occasion":["brunch","celebration","aperitif"],"ingredients":["90ml 普罗塞克","90ml 鲜榨橙汁"],"garnish":"橙片","glass":"香槟杯","method":"build","description":"经典的早午餐饮品，优雅的橙味气泡享受"},{"name_cn":"贝里尼","name_en":"Bellini","base_spirit":["wine"],"family":"sparkling","taste":{"sweet":3,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["fruity","peach"],"color":["pink","orange"],"mouthfeel":["smooth","bubbly"],"strength":"light","temperature":"short-cold","occasion":["aperitif","brunch","celebration"],"ingredients":["90ml 普罗塞克","60ml 白桃泥"],"garnish":"桃片","glass":"香槟杯","method":"build","description":"威尼斯的经典原创，桃香与气泡的完美结合"},{"name_cn":"基尔","name_en":"Kir","base_spirit":["wine"],"family":"aperitif","taste":{"sweet":2,"sour":1,"bitter":1,"salty":0,"umami":0},"aroma":["fruity","berry"],"color":["red","purple"],"mouthfeel":["smooth","crisp"],"strength":"light","temperature":"short-cold","occasion":["aperitif","brunch"],"ingredients":["90ml 干白葡萄酒","15ml 黑加仑利口酒"],"garnish":"无","glass":"葡萄酒杯","method":"build","description":"勃艮第经典开胃酒，果香浓郁"},{"name_cn":"最后的遗言","name_en":"Last Word","base_spirit":["gin"],"family":"martini","taste":{"sweet":1,"sour":3,"bitter":2,"salty":0,"umami":1},"aroma":["herbal","citrus","floral"],"color":["clear","green"],"mouthfeel":["crisp","sharp"],"strength":"strong","temperature":"short-cold","occasion":["aperitif","solo"],"ingredients":["22ml 金酒","22ml 绿查特酒","22ml 马拉斯奇诺利口酒","22ml 青柠汁"],"garnish":"无","glass":"coupe杯","method":"shake","description":"底特律的经典复兴，等分法则的完美诠释"},{"name_cn":"漂亮美眉","name_en":"Bee's Knees","base_spirit":["gin"],"family":"sour","taste":{"sweet":3,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","floral","sweet"],"color":["gold","yellow"],"mouthfeel":["smooth","creamy"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","brunch","party"],"ingredients":["60ml 金酒","20ml 柠檬汁","20ml 蜂蜜糖浆"],"garnish":"柠檬皮","glass":"coupe杯","method":"shake","description":"禁酒令时期的甜蜜救赎，蜂蜜与柠檬的完美融合"},{"name_cn":"探戈","name_en":"Penicillin","base_spirit":["whiskey"],"family":"sour","taste":{"sweet":2,"sour":2,"bitter":1,"salty":0,"umami":1},"aroma":["smoky","citrus","ginger"],"color":["gold"],"mouthfeel":["smooth","sharp"],"strength":"medium","temperature":"short-cold","occasion":["solo","date","winter"],"ingredients":["45ml 混合苏格兰威士忌","25ml 柠檬汁","20ml 生姜蜂蜜糖浆","少许艾莱岛泥煤威士忌"],"garnish":"糖渍姜片","glass":"古典杯","method":"shake","description":"现代经典，泥煤烟熏与姜的完美碰撞"},{"name_cn":"纸飞机","name_en":"Paper Plane","base_spirit":["whiskey"],"family":"martini","taste":{"sweet":2,"sour":3,"bitter":2,"salty":0,"umami":0},"aroma":["citrus","herbal"],"color":["clear","blue"],"mouthfeel":["crisp","sharp"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","solo","party"],"ingredients":["22ml 波本威士忌","22ml 阿佩罗","22ml 苦精","22ml 柠檬汁"],"garnish":"无","glass":"coupe杯","method":"shake","description":"如飞机餐般简单却惊喜，等分四料的完美平衡"},{"name_cn":"日本马天尼","name_en":"Saketini","base_spirit":["gin","sake"],"family":"martini","taste":{"sweet":1,"sour":1,"bitter":1,"salty":0,"umami":2},"aroma":["herbal","rice","citrus"],"color":["clear"],"mouthfeel":["smooth","crisp"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","date","solo"],"ingredients":["45ml 金酒","15ml 干味美思","15ml 清酒"],"garnish":"青柠皮","glass":"马天尼杯","method":"stir","description":"东西方酒文化的完美融合，清酒的微妙旨味与金酒并存"},{"name_cn":"柚子清酒","name_en":"Yuzu Sake Spritz","base_spirit":["sake"],"family":"spritz","taste":{"sweet":2,"sour":3,"bitter":1,"salty":0,"umami":1},"aroma":["citrus","floral"],"color":["gold"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["aperitif","summer","party"],"ingredients":["60ml 纯米吟酿清酒","30ml 柚子汁","15ml 糖浆","苏打水"],"garnish":"柚子片","glass":"葡萄酒杯","method":"build","description":"日式清新的完美体现，柚子与清酒的优雅结合"},{"name_cn":"抹茶酸酒","name_en":"Matcha Sour","base_spirit":["vodka"],"family":"sour","taste":{"sweet":2,"sour":3,"bitter":2,"salty":0,"umami":1},"aroma":["herbal","earthy","citrus"],"color":["green"],"mouthfeel":["creamy","smooth"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","party"],"ingredients":["45ml 伏特加","20ml 抹茶糖浆","20ml 柠檬汁","1个蛋清"],"garnish":"抹茶粉","glass":"coupe杯","method":"shake","description":"抹茶的苦涩与柑橘的清新，独特的东西方融合"},{"name_cn":"柚子抹茶马天尼","name_en":"Yuzu Matcha Martini","base_spirit":["vodka"],"family":"martini","taste":{"sweet":1,"sour":3,"bitter":2,"salty":0,"umami":1},"aroma":["citrus","herbal","earthy"],"color":["green"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","date","party"],"ingredients":["45ml 日本伏特加","20ml 柚子利口酒","15ml 抹茶糖浆","15ml 青柠汁"],"garnish":"抹茶粉和柚子皮","glass":"马天尼杯","method":"shake","description":"日本调酒大师上野秀德的创作，柚子与抹茶的完美平衡"},{"name_cn":"荔枝马天尼","name_en":"Lychee Martini","base_spirit":["vodka"],"family":"martini","taste":{"sweet":3,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["fruity","floral","sweet"],"color":["clear","white"],"mouthfeel":["smooth","creamy"],"strength":"medium","temperature":"short-cold","occasion":["party","date","aperitif"],"ingredients":["45ml 伏特加","30ml 荔枝利口酒","15ml 荔枝汁","青柠汁少许"],"garnish":"荔枝果肉","glass":"马天尼杯","method":"shake","description":"甜蜜优雅的花果香，女性喜爱的经典选择"},{"name_cn":"紫罗兰夫人","name_en":"Violet Hour","base_spirit":["gin"],"family":"martini","taste":{"sweet":2,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["floral","citrus","herbal"],"color":["purple"],"mouthfeel":["smooth","creamy"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","date","party"],"ingredients":["45ml 金酒","15ml 紫罗兰利口酒","15ml 柠檬汁","10ml 糖浆"],"garnish":"紫罗兰花瓣","glass":"coupe杯","method":"shake","description":"如黄昏时分般温柔优雅，花香与柑橘的完美融合"},{"name_cn":"玫瑰马天尼","name_en":"Rose Martini","base_spirit":["gin"],"family":"martini","taste":{"sweet":3,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["floral","rose","citrus"],"color":["pink"],"mouthfeel":["smooth","creamy"],"strength":"medium","temperature":"short-cold","occasion":["date","aperitif","party"],"ingredients":["45ml 玫瑰金酒","15ml 玫瑰糖浆","10ml 柠檬汁","10ml 荔枝利口酒"],"garnish":"玫瑰花瓣","glass":"马天尼杯","method":"stir","description":"浪漫优雅的粉红风情，玫瑰花香令人沉醉"},{"name_cn":"茉莉花语","name_en":"Jasmine Fizz","base_spirit":["gin"],"family":"highball","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["floral","jasmine","citrus"],"color":["clear","white"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["aperitif","summer","party"],"ingredients":["45ml 金酒","20ml 茉莉花糖浆","20ml 柠檬汁","苏打水"],"garnish":"茉莉花","glass":"高球杯","method":"shake","description":"清新淡雅的花香嗨棒，茉莉花的芬芳令人愉悦"},{"name_cn":"味噌古典","name_en":"Miso Old Fashioned","base_spirit":["whiskey"],"family":"old-fashioned","taste":{"sweet":2,"sour":0,"bitter":2,"salty":1,"umami":3},"aroma":["spicy","umami","sweet"],"color":["brown"],"mouthfeel":["smooth","rich"],"strength":"strong","temperature":"short-cold","occasion":["solo","after-dinner","date"],"ingredients":["45ml 波本威士忌","10ml 白味噌糖浆","2 dashes 安高天娜苦精","1 dash 橙子苦精"],"garnish":"橙皮","glass":"古典杯","method":"stir","description":"咸鲜旨味与波本的完美结合，颠覆传统的新经典"},{"name_cn":"味增酸","name_en":"Miso Sour","base_spirit":["whiskey"],"family":"sour","taste":{"sweet":2,"sour":3,"bitter":0,"salty":1,"umami":2},"aroma":["umami","citrus","spicy"],"color":["gold"],"mouthfeel":["smooth","creamy"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","solo"],"ingredients":["45ml 波本威士忌","20ml 白味噌糖浆","20ml 柠檬汁","1个蛋清"],"garnish":"味噌盐","glass":"coupe杯","method":"shake","description":"日本旨味与西方酸酒的创新融合，2026年趋势饮品"},{"name_cn":"味增玛格丽特","name_en":"Umami Margarita","base_spirit":["tequila"],"family":"sour","taste":{"sweet":1,"sour":4,"bitter":0,"salty":2,"umami":2},"aroma":["citrus","umami","herbal"],"color":["clear"],"mouthfeel":["crisp","sharp"],"strength":"medium","temperature":"short-cold","occasion":["party","date","summer"],"ingredients":["45ml 龙舌兰酒","20ml 青柠汁","15ml 君度","几滴酱油或鱼露","10ml 龙舌兰糖浆"],"garnish":"盐边和青柠片","glass":"玛格丽特杯","method":"shake","description":"日本旨味元素融入经典玛格丽特，咸鲜与酸甜的惊喜平衡"},{"name_cn":"柚子蜂蜜蜂","name_en":"Yuzu Honey Bee's Knees","base_spirit":["gin"],"family":"sour","taste":{"sweet":3,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["citrus","floral","honey"],"color":["gold","yellow"],"mouthfeel":["smooth","creamy"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","brunch","party"],"ingredients":["45ml 金酒","20ml 柚子汁","20ml 蜂蜜糖浆","10ml 柠檬汁"],"garnish":"柚子皮和蜂蜜","glass":"coupe杯","method":"shake","description":"经典蜜蜂膝盖的日式演绎，柚子的清香与蜂蜜完美融合"},{"name_cn":"东京骡子","name_en":"Tokyo Mule","base_spirit":["vodka"],"family":"highball","taste":{"sweet":1,"sour":2,"bitter":0,"salty":0,"umami":1},"aroma":["citrus","ginger","herb"],"color":["clear"],"mouthfeel":["crisp","sharp"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party","aperitif"],"ingredients":["45ml 伏特加","120ml 姜汁啤酒","20ml 柚子汁","紫苏叶"],"garnish":"柚子片和紫苏叶","glass":"铜杯","method":"build","description":"莫斯科骡子的日式升级版，柚子与紫苏的清新搭配"},{"name_cn":"梅斯卡尔尼格罗尼","name_en":"Smoked Mezcal Negroni","base_spirit":["tequila","mezcal"],"family":"martini","taste":{"sweet":2,"sour":0,"bitter":4,"salty":0,"umami":1},"aroma":["smoky","herbal","citrus"],"color":["red"],"mouthfeel":["sharp","smooth"],"strength":"strong","temperature":"short-cold","occasion":["aperitif","solo","after-dinner"],"ingredients":["30ml 梅斯卡尔酒","30ml 金巴利","30ml 甜味美思"],"garnish":"橙皮或炭烤橙皮","glass":"古典杯","method":"stir","description":"尼格罗尼的烟熏升级版，梅斯卡尔赋予深沉的烟熏风味"},{"name_cn":"青柠派","name_en":"Key Lime Pie","base_spirit":["vodka"],"family":"dessert","taste":{"sweet":3,"sour":3,"bitter":0,"salty":1,"umami":0},"aroma":["citrus","sweet","nutty"],"color":["white","yellow"],"mouthfeel":["creamy","smooth"],"strength":"medium","temperature":"short-cold","occasion":["after-dinner","party"],"ingredients":["40ml 伏特加","30ml 青柠汁","20ml 椰奶","15ml 炼乳","15ml 蛋白"],"garnish":"青柠皮碎和全麦饼干碎","glass":"coupe杯","method":"shake","description":"可以喝的美国派，青柠椰香与酒精的完美融合"},{"name_cn":"姜汁热托迪","name_en":"Ginger Hot Toddy","base_spirit":["whiskey"],"family":"hot","taste":{"sweet":3,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["spicy","citrus","honey"],"color":["gold"],"mouthfeel":["warm","smooth"],"strength":"medium","temperature":"hot","occasion":["winter","after-dinner","cold"],"ingredients":["45ml 波本威士忌","30ml 柠檬汁","20ml 生姜蜂蜜糖浆","热水"],"garnish":"柠檬片和肉桂棒","glass":"热饮杯","method":"build","description":"温暖身心的冬日佳饮，生姜与蜂蜜的治愈组合"},{"name_cn":"柚子青柠苏打","name_en":"Yuzu Yuzu","base_spirit":["non-alcoholic"],"family":"refresher","taste":{"sweet":1,"sour":4,"bitter":1,"salty":0,"umami":0},"aroma":["citrus","floral"],"color":["clear","yellow"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party","aperitif"],"ingredients":["60ml 柚子汁","30ml 青柠汁","15ml 糖浆","苏打水"],"garnish":"柚子片和薄荷","glass":"高球杯","method":"build","description":"双重柑橘的清爽享受，无酒精的优雅选择"},{"name_cn":"无酒精金汤力","name_en":"Virgin G&T","base_spirit":["non-alcoholic"],"family":"refresher","taste":{"sweet":1,"sour":1,"bitter":2,"salty":0,"umami":0},"aroma":["herbal","citrus","botanical"],"color":["clear"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party","aperitif"],"ingredients":["60ml 无酒精金酒","120ml 汤力水","青柠汁","杜松子"],"garnish":"青柠片和杜松子","glass":"高球杯","method":"build","description":"经典金汤力的无酒精演绎，植物香气依然迷人"},{"name_cn":"无酒精莫吉托","name_en":"Virgin Mojito","base_spirit":["non-alcoholic"],"family":"refresher","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["herbal","citrus"],"color":["clear"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party"],"ingredients":["6片薄荷叶","30ml 青柠汁","15ml 糖浆","苏打水"],"garnish":"薄荷枝和青柠片","glass":"高球杯","method":"muddle","description":"经典莫吉托的无酒精版本，清新依旧"},{"name_cn":"日本威士忌嗨棒","name_en":"Japanese Whisky Highball","base_spirit":["whiskey"],"family":"highball","taste":{"sweet":1,"sour":0,"bitter":1,"salty":0,"umami":0},"aroma":["herbal","citrus","oak"],"color":["gold"],"mouthfeel":["crisp","bubbly","smooth"],"strength":"light","temperature":"long-on-ice","occasion":["aperitif","summer","party"],"ingredients":["45ml 日本威士忌","150ml 苏打水","冰块"],"garnish":"柠檬皮","glass":"高球杯","method":"build","description":"日本威士忌的经典喝法，轻盈优雅的气泡享受"},{"name_cn":"杜松子司令","name_en":"Gimlet","base_spirit":["gin"],"family":"sour","taste":{"sweet":1,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","herbal"],"color":["clear","green"],"mouthfeel":["crisp","sharp"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","solo","party"],"ingredients":["60ml 金酒","20ml 青柠汁","15ml 糖浆或玫瑰莱姆糖浆"],"garnish":"青柠片","glass":"coupe杯","method":"shake","description":"海军经典，青柠与金酒的清爽组合"},{"name_cn":"干金酒","name_en":"Gin and Tonic","base_spirit":["gin"],"family":"highball","taste":{"sweet":1,"sour":1,"bitter":2,"salty":0,"umami":0},"aroma":["herbal","citrus","bitter"],"color":["clear"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["aperitif","summer","party"],"ingredients":["50ml 金酒","100ml 汤力水","青柠角"],"garnish":"青柠皮","glass":"高球杯","method":"build","description":"全球最著名的鸡尾酒之一，简单却永恒"},{"name_cn":"布 Boulevardier","name_en":"Boulevardier","base_spirit":["whiskey"],"family":"martini","taste":{"sweet":2,"sour":0,"bitter":3,"salty":0,"umami":0},"aroma":["herbal","citrus","spicy"],"color":["red"],"mouthfeel":["smooth","rich"],"strength":"strong","temperature":"short-cold","occasion":["aperitif","solo","after-dinner"],"ingredients":["30ml 波本威士忌","30ml 甜味美思","30ml 金巴利"],"garnish":"橙皮","glass":"古典杯","method":"stir","description":"尼格罗尼的威士忌版本，更浓郁复杂"},{"name_cn":"内格罗恩","name_en":"Naked and Famous","base_spirit":["tequila","mezcal"],"family":"martini","taste":{"sweet":1,"sour":4,"bitter":1,"salty":0,"umami":0},"aroma":["citrus","herbal","smoky"],"color":["green","yellow"],"mouthfeel":["crisp","smooth"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","party"],"ingredients":["22ml 梅斯卡尔酒","22ml 黄查特酒","22ml 阿佩罗","22ml 青柠汁"],"garnish":"无","glass":"coupe杯","method":"shake","description":"最后一杯的绝美替代，绿色与黄色的视觉冲击"},{"name_cn":"黑麦酸","name_en":"Rye Sour","base_spirit":["whiskey"],"family":"sour","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["spicy","citrus","sweet"],"color":["gold"],"mouthfeel":["smooth","creamy"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","solo"],"ingredients":["45ml 黑麦威士忌","20ml 柠檬汁","15ml 蜂蜜糖浆","1个蛋清"],"garnish":"安高天娜苦精","glass":"coupe杯","method":"shake","description":"黑麦的辛辣与酸甜的完美平衡"},{"name_cn":"威士忌嗨棒","name_en":"Whiskey Highball","base_spirit":["whiskey"],"family":"highball","taste":{"sweet":1,"sour":0,"bitter":0,"salty":0,"umami":0},"aroma":["herbal","citrus","oak"],"color":["gold"],"mouthfeel":["crisp","bubbly","smooth"],"strength":"light","temperature":"long-on-ice","occasion":["aperitif","summer","party"],"ingredients":["45ml 威士忌","150ml 苏打水","柠檬皮"],"garnish":"柠檬皮","glass":"高球杯","method":"build","description":"威士忌的轻盈喝法，气泡带出更多风味层次"},{"name_cn":"金酒嗨棒","name_en":"Gin Rickey","base_spirit":["gin"],"family":"highball","taste":{"sweet":0,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","herbal"],"color":["clear"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["summer","party","aperitif"],"ingredients":["45ml 金酒","120ml 苏打水","20ml 青柠汁"],"garnish":"青柠片","glass":"高球杯","method":"build","description":"无糖的健康选择，清爽解渴的经典饮品"},{"name_cn":"伏魔使者","name_en":"Corpse Reviver #2","base_spirit":["gin"],"family":"martini","taste":{"sweet":1,"sour":3,"bitter":1,"salty":0,"umami":1},"aroma":["herbal","citrus","anise"],"color":["clear"],"mouthfeel":["crisp","sharp"],"strength":"strong","temperature":"short-cold","occasion":["aperitif","solo"],"ingredients":["22ml 金酒","22ml 君度","22ml 丽心酒","22ml 青柠汁","1 dash 苦艾酒"],"garnish":"橙皮","glass":"coupe杯","method":"shake","description":"据说是解酒良药，四种柑橘草本材料的完美平衡"},{"name_cn":"床第之间","name_en":"Between the Sheets","base_spirit":["brandy","rum"],"family":"sour","taste":{"sweet":2,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["gold"],"mouthfeel":["smooth","creamy"],"strength":"strong","temperature":"short-cold","occasion":["aperitif","party"],"ingredients":["30ml 白兰地","30ml 白朗姆酒","20ml 君度","20ml 柠檬汁"],"garnish":"柠檬皮","glass":"coupe杯","method":"shake","description":"双重基酒的强劲组合，优雅而充满诱惑"},{"name_cn":"巴黎咖啡","name_en":"Parisian Blonde","base_spirit":["brandy"],"family":"old-fashioned","taste":{"sweet":2,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["citrus","fruity","herbal"],"color":["gold"],"mouthfeel":["smooth"],"strength":"medium","temperature":"short-cold","occasion":["aperitif","solo"],"ingredients":["40ml 白兰地","20ml 君度","20ml 柠檬汁"],"garnish":"橙皮","glass":"古典杯","method":"shake","description":"法式优雅的化身，柑橘与白兰地的完美融合"},{"name_cn":"香槟鸡尾酒","name_en":"Champagne Cocktail","base_spirit":["brandy","wine"],"family":"sparkling","taste":{"sweet":2,"sour":1,"bitter":1,"salty":0,"umami":0},"aroma":["citrus","herbal","fruity"],"color":["gold"],"mouthfeel":["bubbly","smooth"],"strength":"light","temperature":"short-cold","occasion":["celebration","aperitif","brunch"],"ingredients":["30ml 白兰地","1块糖","2 dashes 安高天娜苦精","香槟"],"garnish":"橙皮和樱桃","glass":"香槟杯","method":"build","description":"庆祝时刻的经典选择，香槟与白兰地的奢华结合"},{"name_cn":"马提尼","name_en":"Vesper","base_spirit":["gin","vodka"],"family":"martini","taste":{"sweet":0,"sour":0,"bitter":2,"salty":0,"umami":0},"aroma":["herbal","citrus"],"color":["clear"],"mouthfeel":["crisp","sharp"],"strength":"very-strong","temperature":"short-cold","occasion":["aperitif","solo","date"],"ingredients":["60ml 金酒","30ml 伏特加","15ml 丽心酒"],"garnish":"柠檬皮","glass":"马天尼杯","method":"stir","description":"007电影中的专属饮品，詹姆斯邦德的最爱"},{"name_cn":"罗伯罗伊","name_en":"Rob Roy","base_spirit":["whiskey"],"family":"martini","taste":{"sweet":2,"sour":0,"bitter":2,"salty":0,"umami":0},"aroma":["herbal","spicy"],"color":["red"],"mouthfeel":["smooth"],"strength":"strong","temperature":"short-cold","occasion":["aperitif","solo"],"ingredients":["45ml 苏格兰威士忌","30ml 甜味美思","2 dashes 安高天娜苦精"],"garnish":"樱桃","glass":"马天尼杯","method":"stir","description":"曼哈顿的苏格兰版本，威士忌与味美思的经典组合"},{"name_cn":"螺丝刀","name_en":"Screwdriver","base_spirit":["vodka"],"family":"highball","taste":{"sweet":2,"sour":1,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["orange"],"mouthfeel":["crisp","smooth"],"strength":"light","temperature":"long-on-ice","occasion":["summer","brunch","party"],"ingredients":["45ml 伏特加","90ml 橙汁"],"garnish":"橙片","glass":"高球杯","method":"build","description":"简单直接的橙汁伏特加，清爽易饮"},{"name_cn":"白俄罗斯","name_en":"White Russian","base_spirit":["vodka"],"family":"old-fashioned","taste":{"sweet":3,"sour":0,"bitter":1,"salty":0,"umami":0},"aroma":["coffee","cream"],"color":["white","brown"],"mouthfeel":["creamy","smooth"],"strength":"medium","temperature":"short-cold","occasion":["after-dinner","solo"],"ingredients":["45ml 伏特加","30ml 咖啡利口酒","30ml 鲜奶油"],"garnish":"可可粉","glass":"古典杯","method":"build","description":"《谋杀绿脚趾》的经典，丝滑甜蜜的咖啡风味"},{"name_cn":"教母","name_en":"Godmother","base_spirit":["vodka"],"family":"old-fashioned","taste":{"sweet":2,"sour":0,"bitter":0,"salty":0,"umami":0},"aroma":["nutty","sweet"],"color":["brown"],"mouthfeel":["smooth"],"strength":"strong","temperature":"short-cold","occasion":["after-dinner","solo"],"ingredients":["45ml 伏特加","25ml 杏仁利口酒"],"garnish":"无","glass":"古典杯","method":"stir","description":"教父的伏特加版本，杏仁与伏特加的简单组合"},{"name_cn":"俄国","name_en":"Russian","base_spirit":["vodka"],"family":"old-fashioned","taste":{"sweet":2,"sour":0,"bitter":1,"salty":0,"umami":0},"aroma":["coffee","nutty"],"color":["brown"],"mouthfeel":["smooth"],"strength":"strong","temperature":"short-cold","occasion":["after-dinner","solo"],"ingredients":["35ml 伏特加","35ml 咖啡利口酒","35ml 杏仁利口酒"],"garnish":"无","glass":"古典杯","method":"stir","description":"俄罗斯风情的浓郁组合，三种风味的完美融合"},{"name_cn":"蓝色珊瑚","name_en":"Blue Lagoon","base_spirit":["vodka"],"family":"highball","taste":{"sweet":2,"sour":3,"bitter":0,"salty":0,"umami":0},"aroma":["citrus","fruity"],"color":["blue"],"mouthfeel":["crisp","fruity"],"strength":"light","temperature":"long-on-ice","occasion":["party","summer","beach"],"ingredients":["40ml 伏特加","30ml 蓝橙利口酒","80ml 柠檬汁","苏打水"],"garnish":"柠檬片和樱桃","glass":"高球杯","method":"build","description":"如海洋般湛蓝清澈，清爽的夏日风情"},{"name_cn":"新加坡","name_en":"Singapore Sling","base_spirit":["gin"],"family":"punch","taste":{"sweet":3,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["fruity","citrus","cherry"],"color":["pink","red"],"mouthfeel":["crisp","fruity"],"strength":"medium","temperature":"long-on-ice","occasion":["party","summer","tiki"],"ingredients":["30ml 金酒","15ml 樱桃白兰地","15ml 本尼迪克丁","7ml 君度","30ml 菠萝汁","15ml 青柠汁","10ml 石榴糖浆"],"garnish":"菠萝片和樱桃","glass":"飓风杯","method":"shake","description":"新加坡莱佛士酒店的经典招牌酒，果香浓郁的热带风情"},{"name_cn":"阿拉伯沙漠","name_en":"Arabian Desert","base_spirit":["rum"],"family":"punch","taste":{"sweet":3,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["fruity","spicy","citrus"],"color":["gold","orange"],"mouthfeel":["crisp","fruity"],"strength":"medium","temperature":"long-on-ice","occasion":["party","summer","vacation"],"ingredients":["45ml 白朗姆酒","30ml 橙汁","20ml 柠檬汁","15ml 蜂蜜糖浆","少许肉桂","姜汁啤酒"],"garnish":"橙片和肉桂棒","glass":"高球杯","method":"shake","description":"中东风情与加勒比风情的完美融合，香料与果香并存"},{"name_cn":"富士山","name_en":"Mt. Fuji","base_spirit":["vodka"],"family":"dessert","taste":{"sweet":4,"sour":2,"bitter":0,"salty":0,"umami":0},"aroma":["fruity","cream","vanilla"],"color":["white","layered"],"mouthfeel":["creamy","smooth"],"strength":"medium","temperature":"frozen","occasion":["after-dinner","party"],"ingredients":["30ml 伏特加","30ml 椰奶","30ml 菠萝汁","15ml 香草糖浆","15ml 椰子奶油"],"garnish":"樱花饼干或椰丝","glass":"飓风杯","method":"blend","description":"如富士山般洁白美丽，椰香与热带水果的完美融合"},{"name_cn":"清酒嗨棒","name_en":"Sake Highball","base_spirit":["sake"],"family":"highball","taste":{"sweet":1,"sour":1,"bitter":0,"salty":0,"umami":1},"aroma":["rice","citrus","herbal"],"color":["clear"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["aperitif","summer","party"],"ingredients":["60ml 纯米吟酿清酒","120ml 苏打水","青柠皮"],"garnish":"青柠皮","glass":"高球杯","method":"build","description":"日式清酒的清爽喝法，旨味与气泡的完美结合"},{"name_cn":"柚子青柠","name_en":"Yuzu Sour","base_spirit":["sake"],"family":"sour","taste":{"sweet":2,"sour":4,"bitter":1,"salty":0,"umami":1},"aroma":["citrus","floral"],"color":["gold","yellow"],"mouthfeel":["crisp","smooth"],"strength":"light","temperature":"short-cold","occasion":["aperitif","party","summer"],"ingredients":["45ml 清酒","20ml 柚子汁","15ml 柠檬汁","15ml 糖浆"],"garnish":"柚子皮","glass":"coupe杯","method":"shake","description":"日本柑橘与清酒的完美结合，清新优雅"},{"name_cn":"乌梅苏打","name_en":"Umeshu Soda","base_spirit":["wine"],"family":"refresher","taste":{"sweet":3,"sour":2,"bitter":0,"salty":0,"umami":1},"aroma":["fruity","plum","sweet"],"color":["red","purple"],"mouthfeel":["crisp","bubbly"],"strength":"light","temperature":"long-on-ice","occasion":["aperitif","summer","party"],"ingredients":["45ml 梅酒","苏打水","冰块"],"garnish":"梅子果肉","glass":"高球杯","method":"build","description":"日式梅酒的清爽喝法，酸甜适中"},{"name_cn":"紫薯拿铁","name_en":"Ube Latte","base_spirit":["rum"],"family":"dessert","taste":{"sweet":4,"sour":0,"bitter":0,"salty":0,"umami":0},"aroma":["sweet","vanilla","tropical"],"color":["purple"],"mouthfeel":["creamy","smooth"],"strength":"light","temperature":"hot","occasion":["after-dinner","brunch","winter"],"ingredients":["30ml 朗姆酒","120ml 热牛奶","30ml 紫薯糖浆","鲜奶油","可可粉"],"garnish":"紫薯粉和棉花糖","glass":"拿铁杯","method":"build","description":"菲律宾风味的热带拿铁，紫薯的梦幻紫色"},{"name_cn":"伯爵夫人","name_en":"Earl Grey Teani","base_spirit":["gin"],"family":"long-drink","taste":{"sweet":2,"sour":2,"bitter":1,"salty":0,"umami":0},"aroma":["herbal","citrus","floral","bergamot"],"color":["gold"],"mouthfeel":["smooth","crisp"],"strength":"medium","temperature":"long-on-ice","occasion":["aperitif","brunch","party"],"ingredients":["45ml 金酒","30ml 伯爵茶糖浆","20ml 柠檬汁","苏打水"],"garnish":"柠檬片和薰衣草","glass":"高球杯","method":"shake","description":"英式伯爵茶与金酒的优雅结合，佛手柑香气迷人"}];
+</script>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "lifein-cocktail",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Life In. 鸡尾酒定制系统 H5",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
