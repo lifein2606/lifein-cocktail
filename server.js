@@ -367,8 +367,258 @@ function callArkImageAPI(prompt, imageBase64) {
     });
 }
 
+// ====== 订单管理（服务端存储） ======
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'lifein2026';
+const serverOrders = []; // 内存存储，重启后清空
+
+// 用户下单 → 同步到服务端
+app.post('/api/orders', (req, res) => {
+    const order = req.body;
+    if (!order || !order.orderNo) {
+        return res.status(400).json({ error: '订单数据无效' });
+    }
+    serverOrders.unshift(order);
+    console.log(`📦 新订单: ${order.orderNo} | ¥${order.total} | ${order.items?.length || 0}件 | 联系方式: ${order.contact || '未留'}`);
+    res.json({ ok: true });
+});
+
+// 管理端：获取所有订单（需密码）
+app.get('/api/orders', (req, res) => {
+    const pwd = req.query.password || req.headers['x-admin-password'] || '';
+    if (pwd !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: '密码错误' });
+    }
+    res.json(serverOrders);
+});
+
+// 管理端：更新订单状态（需密码）
+app.put('/api/orders/:orderNo/status', (req, res) => {
+    const pwd = req.body.password || req.headers['x-admin-password'] || '';
+    if (pwd !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: '密码错误' });
+    }
+    const { orderNo } = req.params;
+    const { status } = req.body;
+    if (!['confirmed', 'cancelled', 'pending', 'completed'].includes(status)) {
+        return res.status(400).json({ error: '无效状态' });
+    }
+    const order = serverOrders.find(o => o.orderNo === orderNo);
+    if (!order) {
+        return res.status(404).json({ error: '订单不存在' });
+    }
+    order.status = status;
+    console.log(`📦 订单 ${orderNo} → ${status}`);
+    res.json({ ok: true, orderNo, status });
+});
+
+// 用户端：查询自己订单的状态
+app.get('/api/orders/status', (req, res) => {
+    const orderNos = req.query.orderNos || '';
+    if (!orderNos) return res.json({});
+    const nos = orderNos.split(',');
+    const result = {};
+    for (const no of nos) {
+        const order = serverOrders.find(o => o.orderNo === no);
+        result[no] = order ? order.status : 'pending';
+    }
+    res.json(result);
+});
+
+// ====== 管理后台页面 ======
+app.get('/admin', (req, res) => {
+    res.send(getAdminPageHTML());
+});
+
+function getAdminPageHTML() {
+    return `<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Life In. 订单管理</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f0f0f;color:#e8e0d4;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a1a1a,#252525);padding:16px 20px;border-bottom:1px solid rgba(240,160,80,0.2);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header h1{font-size:18px;color:#f0a050}
+.header-right{display:flex;gap:8px;align-items:center}
+.stats{font-size:12px;color:#888;margin-right:8px}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:80vh}
+.login-box{background:#1a1a1a;border:1px solid rgba(240,160,80,0.2);border-radius:16px;padding:32px;width:300px;text-align:center}
+.login-box h2{color:#f0a050;margin-bottom:20px;font-size:18px}
+.login-box input{width:100%;padding:12px;border:1px solid rgba(240,160,80,0.3);border-radius:10px;background:#0f0f0f;color:#e8e0d4;font-size:15px;outline:none;margin-bottom:16px}
+.login-box input:focus{border-color:#f0a050}
+.login-box button{width:100%;padding:12px;background:linear-gradient(135deg,#f0a050,#e88a30);color:#fff;border:none;border-radius:10px;font-size:15px;cursor:pointer;font-weight:600}
+.orders-list{padding:12px 16px}
+.order-card{background:#1a1a1a;border:1px solid rgba(240,160,80,0.15);border-radius:12px;padding:14px;margin-bottom:10px}
+.order-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.order-no{font-size:13px;font-weight:600;color:#f0a050}
+.order-time{font-size:11px;color:#666;margin-top:2px}
+.order-contact{font-size:12px;color:#aaa;margin-top:4px;display:flex;align-items:center;gap:4px}
+.status-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.status-pending{background:rgba(255,200,50,0.15);color:#ffc832}
+.status-confirmed{background:rgba(80,200,120,0.15);color:#50c878}
+.status-cancelled{background:rgba(255,80,80,0.15);color:#ff5050}
+.status-completed{background:rgba(100,160,255,0.15);color:#64a0ff}
+.order-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
+.order-item-name{font-weight:500}
+.order-item-detail{font-size:11px;color:#888}
+.order-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
+.order-total{font-size:15px;font-weight:700;color:#f0a050}
+.action-btns{display:flex;gap:5px;flex-wrap:wrap}
+.action-btn{padding:5px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer}
+.btn-confirm{background:rgba(80,200,120,0.2);color:#50c878}
+.btn-confirm:hover{background:rgba(80,200,120,0.35)}
+.btn-complete{background:rgba(100,160,255,0.2);color:#64a0ff}
+.btn-complete:hover{background:rgba(100,160,255,0.35)}
+.btn-cancel{background:rgba(255,80,80,0.2);color:#ff5050}
+.btn-cancel:hover{background:rgba(255,80,80,0.35)}
+.btn-reset{background:rgba(255,200,50,0.2);color:#ffc832}
+.btn-reset:hover{background:rgba(255,200,50,0.35)}
+.empty{text-align:center;padding:60px 20px;color:#555;font-size:14px}
+.small-btn{padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;border:1px solid rgba(240,160,80,0.3);background:rgba(240,160,80,0.1);color:#f0a050}
+.small-btn:hover{background:rgba(240,160,80,0.2)}
+.logout-btn{padding:4px 10px;background:rgba(255,255,255,0.05);color:#666;border:1px solid rgba(255,255,255,0.1);border-radius:6px;cursor:pointer;font-size:11px}
+.filter-bar{display:flex;gap:6px;padding:8px 16px;flex-wrap:wrap}
+.filter-btn{padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#888;font-size:12px;cursor:pointer}
+.filter-btn.active{background:rgba(240,160,80,0.15);color:#f0a050;border-color:rgba(240,160,80,0.3)}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🍸 Life In. 订单管理</h1>
+<div class="header-right">
+<span class="stats" id="stats"></span>
+<button class="small-btn" id="refreshBtn" style="display:none">🔄 刷新</button>
+<button class="logout-btn" id="logoutBtn" style="display:none">退出</button>
+</div>
+</div>
+<div class="filter-bar" id="filterBar" style="display:none">
+<button class="filter-btn active" data-filter="all">全部</button>
+<button class="filter-btn" data-filter="pending">待确认</button>
+<button class="filter-btn" data-filter="confirmed">已确认</button>
+<button class="filter-btn" data-filter="completed">已完成</button>
+<button class="filter-btn" data-filter="cancelled">已取消</button>
+</div>
+<div id="content"></div>
+<script>
+let password = localStorage.getItem('admin_pwd') || '';
+let currentFilter = 'all';
+
+async function login() {
+    const pwd = document.getElementById('pwdInput').value;
+    if (!pwd) return;
+    password = pwd;
+    localStorage.setItem('admin_pwd', pwd);
+    await loadOrders();
+}
+
+async function loadOrders() {
+    try {
+        const res = await fetch('/api/orders?password=' + encodeURIComponent(password));
+        if (res.status === 401) {
+            password = '';
+            localStorage.removeItem('admin_pwd');
+            showLogin('密码错误，请重试');
+            return;
+        }
+        const orders = await res.json();
+        showOrders(orders);
+    } catch (e) {
+        document.getElementById('content').innerHTML = '<div class="empty">加载失败，请检查网络</div>';
+    }
+}
+
+async function updateStatus(orderNo, status) {
+    try {
+        const res = await fetch('/api/orders/' + orderNo + '/status', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Password': password },
+            body: JSON.stringify({ status, password })
+        });
+        if (res.ok) { await loadOrders(); }
+        else { alert('操作失败'); }
+    } catch (e) { alert('网络错误'); }
+}
+
+function showLogin(err) {
+    document.getElementById('refreshBtn').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('filterBar').style.display = 'none';
+    document.getElementById('stats').textContent = '';
+    document.getElementById('content').innerHTML = '<div class="login-wrap"><div class="login-box"><h2>🔐 管理员登录</h2>'+(err?'<p style="color:#ff5050;font-size:13px;margin-bottom:12px">'+err+'</p>':'')+'<input type="password" id="pwdInput" placeholder="输入管理密码" onkeydown="if(event.key===\\'Enter\\')login()"><button onclick="login()">登录</button></div></div>';
+}
+
+function showOrders(orders) {
+    document.getElementById('refreshBtn').style.display = '';
+    document.getElementById('logoutBtn').style.display = '';
+    document.getElementById('filterBar').style.display = '';
+
+    const counts = { all: orders.length, pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
+    orders.forEach(o => { if (counts[o.status] !== undefined) counts[o.status]++; });
+    document.getElementById('stats').textContent = '共' + orders.length + '单';
+
+    // Update filter button texts
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        const f = btn.dataset.filter;
+        btn.textContent = (f==='all'?'全部':f==='pending'?'待确认':f==='confirmed'?'已确认':f==='completed'?'已完成':'已取消') + '(' + (counts[f]||0) + ')';
+    });
+
+    let filtered = currentFilter === 'all' ? orders : orders.filter(o => o.status === currentFilter);
+
+    if (filtered.length === 0) {
+        document.getElementById('content').innerHTML = '<div class="empty">📋 暂无' + (currentFilter==='all'?'':'该状态') + '订单</div>';
+        return;
+    }
+
+    let html = '<div class="orders-list">';
+    for (const o of filtered) {
+        const d = new Date(o.createdAt);
+        const t = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+        const sl = o.status==='pending'?'待确认':o.status==='confirmed'?'已确认':o.status==='completed'?'已完成':'已取消';
+        let items = '';
+        for (const it of (o.items||[])) {
+            const qty = it.quantity||1;
+            const cl = it.capacity<=200?'小瓶':it.capacity<=350?'中瓶':'大瓶';
+            items += '<div class="order-item"><div><span class="order-item-name">'+it.cocktailName+'</span> <span class="order-item-detail">'+it.capacity+'ml·'+cl+'×'+qty+'</span></div></div>';
+        }
+        const contactHtml = o.contact ? '<div class="order-contact">📞 '+o.contact+'</div>' : '';
+        let actions = '';
+        if (o.status==='pending') {
+            actions = '<button class="action-btn btn-confirm" onclick="updateStatus(\\''+o.orderNo+'\\',\\'confirmed\\')">✓ 确认</button><button class="action-btn btn-cancel" onclick="updateStatus(\\''+o.orderNo+'\\',\\'cancelled\\')">✕ 取消</button>';
+        } else if (o.status==='confirmed') {
+            actions = '<button class="action-btn btn-complete" onclick="updateStatus(\\''+o.orderNo+'\\',\\'completed\\')">✓ 完成</button><button class="action-btn btn-cancel" onclick="updateStatus(\\''+o.orderNo+'\\',\\'cancelled\\')">✕ 取消</button>';
+        } else {
+            actions = '<button class="action-btn btn-reset" onclick="updateStatus(\\''+o.orderNo+'\\',\\'pending\\')">↩ 重置</button>';
+        }
+        html += '<div class="order-card"><div class="order-header"><div><div class="order-no">'+o.orderNo+'</div><div class="order-time">'+t+'</div>'+contactHtml+'</div><span class="status-badge status-'+o.status+'">'+sl+'</span></div>'+items+'<div class="order-footer"><span class="order-total">¥'+o.total+'</span><div class="action-btns">'+actions+'</div></div></div>';
+    }
+    html += '</div>';
+    document.getElementById('content').innerHTML = html;
+}
+
+// Filter buttons
+document.getElementById('filterBar').addEventListener('click', (e) => {
+    if (!e.target.classList.contains('filter-btn')) return;
+    currentFilter = e.target.dataset.filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    loadOrders();
+});
+
+document.getElementById('refreshBtn').addEventListener('click', loadOrders);
+document.getElementById('logoutBtn').addEventListener('click', () => { password=''; localStorage.removeItem('admin_pwd'); showLogin(); });
+
+if (password) { loadOrders(); } else { showLogin(); }
+setInterval(() => { if (password) loadOrders(); }, 15000);
+</script>
+</body>
+</html>`;
+}
+
 app.listen(PORT, () => {
-    console.log(`🍸 Life In. 鸡尾酒定制系统 → http://localhost:${PORT}`);
-    console.log(`🎨 ARK API（图片生成）: ${ARK_API_KEY ? '✅ 已配置' : '❌ 未配置'} | 模型: ${ARK_MODEL}`);
-    console.log(`💬 Coze API（AI聊天）: ${COZE_API_TOKEN && COZE_BOT_ID ? '✅ 已配置' : '❌ 未配置'} | Bot: ${COZE_BOT_ID || '未设置'}`);
+    console.log(\`🍸 Life In. 鸡尾酒定制系统 → http://localhost:\${PORT}\`);
+    console.log(\`🎨 ARK API（图片生成）: \${ARK_API_KEY ? '✅ 已配置' : '❌ 未配置'} | 模型: \${ARK_MODEL}\`);
+    console.log(\`💬 Coze API（AI聊天）: \${COZE_API_TOKEN && COZE_BOT_ID ? '✅ 已配置' : '❌ 未配置'} | Bot: \${COZE_BOT_ID || '未设置'}\`);
+    console.log(\`📋 管理后台: http://localhost:\${PORT}/admin | 密码: \${ADMIN_PASSWORD}\`);
 });

@@ -1675,6 +1675,14 @@
             background: rgba(80,200,120,0.15);
             color: #50c878;
         }
+        .order-card-status.cancelled {
+            background: rgba(255,80,80,0.15);
+            color: #ff5050;
+        }
+        .order-card-status.completed {
+            background: rgba(100,160,255,0.15);
+            color: #64a0ff;
+        }
         .order-card-item {
             display: flex;
             align-items: center;
@@ -1774,6 +1782,62 @@
             font-size: 12px;
             color: var(--text2);
             margin-top: 6px;
+        }
+
+        /* 联系方式弹窗 */
+        .contact-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .contact-overlay.active {
+            opacity: 1; pointer-events: auto;
+        }
+        .contact-box {
+            background: #1a1a1a;
+            border: 1px solid rgba(240,160,80,0.25);
+            border-radius: 20px;
+            padding: 28px 24px;
+            width: 88%; max-width: 340px;
+            text-align: center;
+        }
+        .contact-box h3 {
+            font-size: 17px; color: #f0a050;
+            margin-bottom: 6px;
+        }
+        .contact-box p {
+            font-size: 12px; color: #888;
+            margin-bottom: 16px;
+        }
+        .contact-box input {
+            width: 100%; padding: 13px 14px;
+            border: 1px solid rgba(240,160,80,0.25);
+            border-radius: 12px;
+            background: #0f0f0f; color: #e8e0d4;
+            font-size: 15px; outline: none;
+            margin-bottom: 12px;
+        }
+        .contact-box input:focus { border-color: #f0a050; }
+        .contact-box input::placeholder { color: #555; }
+        .contact-btns {
+            display: flex; gap: 10px;
+        }
+        .contact-btns button {
+            flex: 1; padding: 12px;
+            border-radius: 12px; border: none;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+        }
+        .contact-cancel {
+            background: rgba(255,255,255,0.06); color: #888;
+        }
+        .contact-submit {
+            background: linear-gradient(135deg, #f0a050, #e88a30); color: #fff;
+        }
+        .contact-error {
+            font-size: 12px; color: #ff5050; margin-top: -6px; margin-bottom: 8px; display: none;
         }
 
         /* 还没有想法 按钮 */
@@ -2048,6 +2112,20 @@
             <button class="orders-drawer-close" id="ordersDrawerClose">✕</button>
         </div>
         <div class="orders-drawer-body" id="ordersDrawerBody"></div>
+    </div>
+</div>
+
+<!-- 联系方式弹窗 -->
+<div class="contact-overlay" id="contactOverlay">
+    <div class="contact-box">
+        <h3>📞 留下联系方式</h3>
+        <p>方便我们确认订单和通知您取酒</p>
+        <input type="text" id="contactInput" placeholder="手机号 / 微信号" maxlength="30" autocomplete="off">
+        <div class="contact-error" id="contactError">请填写联系方式</div>
+        <div class="contact-btns">
+            <button class="contact-cancel" id="contactCancel">取消</button>
+            <button class="contact-submit" id="contactSubmit">确认下单</button>
+        </div>
     </div>
 </div>
 
@@ -3025,18 +3103,57 @@ document.getElementById('btnContinueShopping').addEventListener('click', () => {
 document.getElementById('btnCheckout').addEventListener('click', () => {
     const cart = getCart();
     if (cart.length === 0) return;
+    // 弹出联系方式弹窗
+    document.getElementById('contactInput').value = localStorage.getItem('lifeInContact') || '';
+    document.getElementById('contactError').style.display = 'none';
+    document.getElementById('contactOverlay').classList.add('active');
+    setTimeout(() => document.getElementById('contactInput').focus(), 300);
+});
+
+// 联系方式弹窗 - 取消
+document.getElementById('contactCancel').addEventListener('click', () => {
+    document.getElementById('contactOverlay').classList.remove('active');
+});
+
+// 联系方式弹窗 - 点击外部关闭
+document.getElementById('contactOverlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('contactOverlay')) {
+        document.getElementById('contactOverlay').classList.remove('active');
+    }
+});
+
+// 联系方式弹窗 - 确认下单
+document.getElementById('contactSubmit').addEventListener('click', () => {
+    const contact = document.getElementById('contactInput').value.trim();
+    if (!contact) {
+        document.getElementById('contactError').style.display = 'block';
+        document.getElementById('contactInput').focus();
+        return;
+    }
+    // 记住联系方式
+    localStorage.setItem('lifeInContact', contact);
+    document.getElementById('contactOverlay').classList.remove('active');
+
     // 创建订单
+    const cart = getCart();
     const order = {
         id: Date.now(),
         orderNo: 'LI' + Date.now().toString(36).toUpperCase(),
         items: JSON.parse(JSON.stringify(cart)),
         total: cart.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0),
+        contact: contact,
         status: 'pending',
         createdAt: new Date().toISOString()
     };
     const orders = getOrders();
     orders.unshift(order);
     saveOrders(orders);
+    // 同步到服务端
+    fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+    }).catch(() => {}); // 失败静默，不影响本地
     // 清空购物车
     saveCart([]);
     renderCartDrawer();
@@ -3069,12 +3186,17 @@ function renderOrdersDrawer() {
         return;
     }
 
+    // 从服务端同步状态
+    syncOrderStatuses(orders);
+
     let html = '';
     for (const order of orders) {
         const d = new Date(order.createdAt);
         const timeStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        const statusLabel = order.status === 'pending' ? '待确认' : '已确认';
-        const statusClass = order.status === 'pending' ? 'pending' : 'confirmed';
+        const statusMap = { pending: '待确认', confirmed: '已确认', cancelled: '已取消', completed: '已完成' };
+        const statusLabel = statusMap[order.status] || '待确认';
+        const statusClass = order.status || 'pending';
+        const contactHtml = order.contact ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">📞 ${order.contact}</div>` : '';
 
         let itemsHtml = '';
         for (const item of order.items) {
@@ -3096,6 +3218,7 @@ function renderOrdersDrawer() {
                 <div>
                     <div class="order-card-id">${order.orderNo}</div>
                     <div class="order-card-time">${timeStr}</div>
+                    ${contactHtml}
                 </div>
                 <span class="order-card-status ${statusClass}">${statusLabel}</span>
             </div>
@@ -3107,6 +3230,32 @@ function renderOrdersDrawer() {
         </div>`;
     }
     body.innerHTML = html;
+}
+
+// 从服务端同步订单状态
+function syncOrderStatuses(orders) {
+    const orderNos = orders.map(o => o.orderNo).join(',');
+    if (!orderNos) return;
+    fetch('/api/orders/status?orderNos=' + encodeURIComponent(orderNos))
+        .then(r => r.json())
+        .then(statusMap => {
+            let changed = false;
+            for (const order of orders) {
+                if (statusMap[order.orderNo] && statusMap[order.orderNo] !== order.status) {
+                    order.status = statusMap[order.orderNo];
+                    changed = true;
+                }
+            }
+            if (changed) {
+                saveOrders(orders);
+                // 重新渲染
+                const body = document.getElementById('ordersDrawerBody');
+                if (body && document.getElementById('ordersOverlay').classList.contains('active')) {
+                    renderOrdersDrawer();
+                }
+            }
+        })
+        .catch(() => {});
 }
 
 // 我的订单交互
